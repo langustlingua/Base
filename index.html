@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Лангуст v6 — Рабочая база</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+/* фирменные цвета логотипа */
+--graphite:#2B2A28;--blue:#29ABE2;--pink:#E84C88;--orange:#F7941D;--green:#7AC943;--red:#F1512E;--yellow:#FFC20E;--purple:#C724F0;
+/* роли интерфейса */
+--navy:#2B2A28;--ink:#2B2A28;--cream:#FAF7F2;--sand:#F0EBE3;--muted:#8A857D;--white:#fff;--ok:#5FA524;--warn:#D67A12;--border:#E2DCD2;--sh:0 2px 12px rgba(43,42,40,.09);--r:12px;--acc:#F7941D;
+/* этапы воронки в цветах лого: 1-розовый, 2-зелёный, 3-фиолетовый */
+--e1:#E84C88;--e1bg:#FDEAF2;--e2:#5FA524;--e2bg:#EEF7E4;--e3:#C724F0;--e3bg:#F8EAFD}
+html,body{overscroll-behavior-y:none}
+body{font-family:Inter,sans-serif;background:var(--cream);color:var(--ink);font-size:15px;line-height:1.6;min-height:100vh;padding-bottom:64px}
+
+/* ===== Верхняя шапка (мобайл) ===== */
+.appbar{position:sticky;top:0;z-index:50;background:var(--navy);color:#fff;display:flex;align-items:center;gap:10px;padding:11px 14px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.appbar .burger{background:rgba(255,255,255,.12);border:none;color:#fff;width:38px;height:38px;border-radius:9px;font-size:19px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.appbar .title{flex:1;min-width:0;display:flex;align-items:center}
+.applogo{height:26px;width:auto;max-width:100%}
+.appbar .title span{color:#E8943A}
+.appbar .editbtn{background:rgba(255,255,255,.12);border:none;color:#fff;padding:7px 11px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.appbar .editbtn.on{background:var(--acc)}
+
+/* ===== Выдвижное меню ===== */
+.scrim{position:fixed;inset:0;background:rgba(15,31,51,.5);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:290px;max-width:86vw;background:var(--navy);color:#fff;z-index:70;transform:translateX(-100%);transition:transform .24s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:14px 0 30px;-webkit-overflow-scrolling:touch}
+.drawer.show{transform:none}
+.drawer .dlogo{font-family:"Playfair Display",serif;font-size:17px;padding:4px 16px 13px;border-bottom:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:8px}
+.drawer .dlogo span{color:#E8943A}
+.drawer .dclose{margin-left:auto;background:rgba(255,255,255,.1);border:none;color:#fff;width:30px;height:30px;border-radius:8px;font-size:16px;cursor:pointer}
+.ns{padding:10px 0 0}
+.nl{font-size:9.5px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;padding:7px 16px 4px;display:flex;align-items:center;gap:7px}
+.nl .dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.nl.e0{color:#B0ADA8}.nl.e0 .dot{background:#8A857D}
+.nl.e1{color:#F49BC0}.nl.e1 .dot{background:var(--e1)}
+.nl.e2{color:#A9DA7E}.nl.e2 .dot{background:var(--e2)}
+.nl.e3{color:#E29BF7}.nl.e3 .dot{background:var(--e3)}
+.nl.ref{color:rgba(255,255,255,.32)}.nl.ref .dot{background:rgba(255,255,255,.3)}
+.ni{display:flex;align-items:center;gap:9px;padding:11px 16px 11px 24px;cursor:pointer;font-size:14px;color:rgba(255,255,255,.72);border-left:3px solid transparent;transition:background .12s}
+.ni:active{background:rgba(255,255,255,.1)}
+.ni.active{background:rgba(255,255,255,.1);color:#fff;border-left-color:#E8943A;font-weight:500}
+
+/* ===== Нижняя таб-панель ===== */
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:55;background:#fff;border-top:1px solid var(--border);display:flex;box-shadow:0 -2px 12px rgba(15,31,51,.06)}
+.tabbar button{flex:1;background:none;border:none;padding:8px 4px 9px;cursor:pointer;font-family:inherit;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:600}
+.tabbar button .ic{font-size:20px;line-height:1}
+.tabbar button.active{color:var(--navy)}
+
+main{max-width:760px;margin:0 auto;padding:16px 14px 30px}
+.sec{display:none}.sec.active{display:block}
+
+/* поиск */
+.sw{position:relative;margin-bottom:14px}
+.sw input{width:100%;padding:11px 14px 11px 38px;border:1.5px solid var(--border);border-radius:var(--r);background:#fff;font-size:15px;font-family:inherit;color:var(--ink);outline:none}
+.sw input:focus{border-color:var(--navy)}
+.sw .si{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+
+/* заголовки */
+.st{font-family:"Playfair Display",serif;font-size:23px;color:var(--navy);margin-bottom:3px}
+.ss{color:var(--muted);font-size:13px;margin-bottom:16px}
+.subh{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:16px 0 7px}
+
+/* шапка этапа */
+.ehdr{border-radius:var(--r);padding:16px 17px;margin-bottom:15px;color:#fff}
+.ehdr.e1{background:linear-gradient(135deg,#E84C88,#C7356E)}
+.ehdr.e2{background:linear-gradient(135deg,#7AC943,#5FA524)}
+.ehdr.e3{background:linear-gradient(135deg,#C724F0,#A315C9)}
+.ehdr .ekick{font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;opacity:.7;margin-bottom:3px}
+.ehdr .etitle{font-family:"Playfair Display",serif;font-size:22px;line-height:1.15;margin-bottom:7px}
+.ehdr .edesc{font-size:13px;opacity:.94;line-height:1.55}
+.ehdr .emeta{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+.ehdr .emeta span{background:rgba(255,255,255,.16);border-radius:20px;padding:4px 11px;font-size:11px;font-weight:500}
+
+/* карточки */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:11px;box-shadow:var(--sh)}
+.ct{font-weight:600;font-size:13.5px;color:var(--navy);margin-bottom:8px}
+.card p{font-size:14px;margin-bottom:5px}.card p:last-child{margin-bottom:0}
+.warn{background:#FFF3E0;border:1px solid #F5A623;border-radius:var(--r);padding:12px 14px;margin-bottom:11px;font-size:12.5px;color:#6B3900}
+.warn strong{display:block;margin-bottom:3px}
+
+/* прогресс-бар */
+.prog{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;margin-bottom:13px;box-shadow:var(--sh)}
+.prog .pt2{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.prog .plab{font-size:12.5px;color:var(--muted);font-weight:600}
+.prog .pval{font-size:13px;color:var(--navy);font-weight:700}
+.pbar{height:9px;background:var(--sand);border-radius:20px;overflow:hidden}
+.pbar>div{height:100%;background:linear-gradient(90deg,#7AC943,#5FA524);border-radius:20px;transition:width .4s}
+
+/* метрики */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.sc{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;box-shadow:var(--sh)}
+.sn{font-family:"Playfair Display",serif;font-size:25px;color:var(--navy);line-height:1;margin-bottom:2px}
+.sl{font-size:11.5px;color:var(--muted)}
+
+/* карта этапов */
+.fmap{display:flex;flex-direction:column;gap:8px;margin-bottom:15px}
+.fmap .step{padding:13px 15px;color:#fff;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;gap:12px}
+.fmap .step.s1{background:linear-gradient(135deg,#E84C88,#C7356E)}
+.fmap .step.s2{background:linear-gradient(135deg,#7AC943,#5FA524)}
+.fmap .step.s3{background:linear-gradient(135deg,#C724F0,#A315C9)}
+.fmap .step .fnum{font-size:20px;font-weight:700;opacity:.5;flex-shrink:0}
+.fmap .step .flab{font-size:15px;font-weight:600;line-height:1.2}
+.fmap .step .fsub{font-size:11.5px;opacity:.88;margin-top:2px}
+.fmap .step .farr{margin-left:auto;opacity:.6}
+
+/* таблицы */
+.pt{width:100%;border-collapse:collapse}
+.pt th{background:var(--sand);font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);padding:7px 9px;text-align:left;border-bottom:1px solid var(--border)}
+.pt td{padding:8px 9px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:top}
+.pt tr:last-child td{border-bottom:none}
+.pt tr.hl td{background:#F0F9F4;font-weight:500}
+
+/* теги */
+.tag{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;margin:2px 3px 2px 0}
+.tb{background:#E8EEF7;color:var(--navy)}.tg{background:#E8F5EE;color:var(--ok)}.ts{background:var(--sand);color:var(--muted)}.to{background:#FEF0E0;color:var(--warn)}
+
+/* блок контента внутри этапа */
+.tblock{margin-bottom:20px}
+.tbh{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:7px;border-bottom:2px solid var(--sand);flex-wrap:wrap}
+.tbh .ic{font-size:17px}
+.tbh .tt{font-weight:700;font-size:15px;color:var(--navy)}
+.tbh .hint{font-size:10px;color:var(--muted);background:var(--sand);padding:2px 8px;border-radius:20px;font-weight:600}
+.tbh .cnt{margin-left:auto;font-size:11px;color:var(--muted)}
+
+/* карточка-аккордеон рилса/поста */
+.item{background:#fff;border:1px solid var(--border);border-radius:var(--r);margin-bottom:9px;overflow:hidden;box-shadow:var(--sh);transition:opacity .2s}
+.item.done{opacity:.5}
+.ih{display:flex;align-items:flex-start;gap:9px;padding:12px 13px;cursor:pointer}
+.ih .an{width:26px;height:26px;border-radius:7px;background:var(--navy);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ih .am{flex:1;min-width:0}
+.ih .ak{font-weight:500;font-size:14px;color:var(--ink);line-height:1.35}
+.ih .as{font-size:11px;color:var(--muted);margin-top:3px}
+.ih .aw{background:var(--sand);color:var(--muted);font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:20px;white-space:nowrap;align-self:center}
+.ih .arrow{color:var(--muted);font-size:11px;flex-shrink:0;align-self:center;transition:transform .2s}
+.item.open .arrow{transform:rotate(180deg)}
+.ib{display:none;padding:0 13px 13px;background:var(--cream);border-top:1px solid var(--border)}
+.item.open .ib{display:block}
+
+/* строка действий на карточке */
+.acts{display:flex;gap:7px;padding:10px 0 4px;flex-wrap:wrap}
+.actbtn{display:flex;align-items:center;gap:5px;padding:8px 12px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;border:1.5px solid var(--border);background:#fff;color:var(--navy);flex:1;justify-content:center;min-width:90px}
+.actbtn.star.on{background:#FFF3E0;border-color:var(--acc);color:var(--acc)}
+.actbtn.done.on{background:#E8F5EE;border-color:var(--ok);color:var(--ok)}
+.actbtn.copy{background:var(--navy);color:#fff;border-color:var(--navy)}
+.actbtn.council{background:#F7941D;color:#fff;border-color:#F7941D}
+/* мастер консилиума */
+.cwrap{padding:2px 0}
+.cstep{margin-bottom:14px}
+.cq{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:9px}
+.cqhint{font-size:12px;color:var(--muted);margin-bottom:9px;font-weight:400}
+.copts{display:flex;flex-direction:column;gap:7px}
+.copt{padding:12px 13px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-size:14px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink);display:flex;align-items:center;gap:9px}
+.copt.sel{border-color:var(--acc);background:#FEF6EC}
+.copt .cdot{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);flex-shrink:0}
+.copt.sel .cdot{border-color:var(--acc);background:var(--acc);box-shadow:inset 0 0 0 3px #fff}
+.cstage{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--acc);margin-bottom:6px}
+.cnav{display:flex;gap:8px;margin-top:14px}
+.promptbox{background:var(--cream);border:1.5px solid var(--border);border-radius:10px;padding:12px 13px;font-size:12.5px;line-height:1.55;white-space:pre-wrap;max-height:280px;overflow-y:auto;color:#3a3530;font-family:inherit}
+.cprog{display:flex;gap:5px;margin-bottom:14px}
+.cprog .cp{flex:1;height:4px;border-radius:20px;background:var(--sand)}
+.cprog .cp.on{background:var(--acc)}
+/* матрица контента */
+.mxrow{background:#fff;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;box-shadow:var(--sh);overflow:hidden}
+.mxhead{padding:11px 13px;display:flex;align-items:flex-start;gap:9px;cursor:pointer}
+.mxhead .mxnum{width:24px;height:24px;border-radius:6px;background:var(--navy);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mxhead .mxt{flex:1;min-width:0}
+.mxhead .mxtitle{font-size:13.5px;font-weight:500;line-height:1.3}
+.mxhead .mxmeta{font-size:11px;color:var(--muted);margin-top:3px}
+.mxbadge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;align-self:center}
+.mxbadge.z{background:var(--sand);color:var(--muted)}
+.mxbadge.p{background:#FEF6EC;color:var(--acc)}
+.mxbadge.f{background:var(--e2bg);color:var(--e2)}
+.mxbody{display:none;padding:0 13px 13px;border-top:1px solid var(--border);background:var(--cream)}
+.mxrow.open .mxbody{display:block}
+.mxrow.open .mxarr{transform:rotate(180deg)}
+.mxarr{color:var(--muted);font-size:11px;align-self:center;transition:transform .2s}
+.mxaxis{margin-top:11px}
+.mxaxlab{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.mxcells{display:flex;flex-wrap:wrap;gap:6px}
+.mxcell{padding:7px 11px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted);display:flex;align-items:center;gap:5px}
+.mxcell.on{background:var(--e2);border-color:var(--e2);color:#fff}
+.mxnext{background:#FEF6EC;border:1px solid var(--acc);border-radius:10px;padding:10px 12px;font-size:12.5px;color:#7a4a10;margin-bottom:12px}
+
+.at{font-size:14px;color:#3a3530;line-height:1.7;background:#fff;border-radius:9px;padding:11px 13px;white-space:pre-wrap;border:1px solid var(--border);width:100%;font-family:inherit;display:block;margin-top:9px}
+.vlabel{display:flex;align-items:center;gap:6px;margin-top:11px}
+.bg{font-size:9.5px;padding:3px 7px;border-radius:20px;font-weight:600}
+.b1{background:#E8EEF7;color:var(--navy)}.b2{background:#FEF0E0;color:var(--warn)}.b3{background:#E8F5EE;color:var(--ok)}
+
+/* строки-хуки */
+.hi{background:#fff;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:9px;box-shadow:var(--sh);transition:opacity .2s}
+.hi.done{opacity:.5}
+.hi .ht{flex:1;outline:none;line-height:1.4}
+.hi .hstar{background:none;border:none;font-size:17px;cursor:pointer;color:var(--border);flex-shrink:0;padding:2px}
+.hi .hstar.on{color:var(--acc)}
+.hi .hcp{background:none;border:none;font-size:15px;cursor:pointer;color:var(--muted);flex-shrink:0;padding:2px}
+
+/* кодовые слова */
+.kg{display:flex;flex-wrap:wrap;gap:8px}
+.kc{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;min-width:calc(50% - 4px);cursor:pointer;box-shadow:var(--sh)}
+.kc:active{border-color:var(--navy)}
+.kw{font-size:13px;font-weight:700;color:var(--navy);outline:none;display:flex;align-items:center;gap:6px}
+.kd{font-size:10.5px;color:var(--muted);margin-top:2px;outline:none}
+
+/* фильтры */
+.ft{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;overflow-x:auto;padding-bottom:2px}
+.ftb{padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.ftb.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* добавить */
+.ba{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;border-radius:10px;border:1.5px dashed var(--border);background:#fff;color:var(--muted);font-size:13.5px;cursor:pointer;font-family:inherit;width:100%;margin-top:8px}
+.ba:active{border-color:var(--navy);color:var(--navy)}
+.bd{background:none;border:none;color:#ccc;cursor:pointer;font-size:15px;flex-shrink:0;padding:2px 4px}
+
+/* edit-режим */
+.editable{outline:none}
+.em .editable[contenteditable="true"]{border:1.5px dashed var(--acc)!important;border-radius:5px;cursor:text}
+.em .editable[contenteditable="true"]:focus{border-color:var(--ok)!important;background:#FAFFF4}
+
+/* «Сегодня» карточка-слот */
+.todaycard{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;margin-bottom:12px}
+.todaycard .tch{padding:11px 15px;color:#fff;font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.todaycard .tcbody{padding:14px 15px}
+.todaycard .tcmeta{font-size:11px;color:var(--muted);margin-bottom:6px}
+.todaycard .tctitle{font-size:15px;font-weight:600;color:var(--ink);line-height:1.4;margin-bottom:4px}
+.todaycard .tctext{font-size:13.5px;color:#3a3530;line-height:1.65;white-space:pre-wrap;background:var(--cream);border-radius:9px;padding:11px 12px;margin:9px 0}
+.todaycard .tcacts{display:flex;gap:8px;flex-wrap:wrap}
+
+/* toast, modal */
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--navy);color:#fff;padding:10px 18px;border-radius:22px;font-size:13px;font-weight:500;opacity:0;transition:all .25s;pointer-events:none;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150;display:none;align-items:flex-end;justify-content:center}
+.mo.show{display:flex}
+.md{background:#fff;border-radius:18px 18px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:600px;max-height:88vh;overflow-y:auto}
+.md h3{font-family:"Playfair Display",serif;font-size:17px;color:var(--navy);margin-bottom:12px}
+.md label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:3px;margin-top:9px}
+.md input,.md textarea,.md select{width:100%;padding:10px 11px;border:1.5px solid var(--border);border-radius:9px;font-size:15px;font-family:inherit;color:var(--ink);outline:none;resize:vertical}
+.md input:focus,.md textarea:focus{border-color:var(--navy)}
+.mdb{display:flex;gap:8px;margin-top:15px}
+.bp{flex:1;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.bs{flex:1;padding:12px;background:#fff;color:var(--muted);border:1.5px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;font-family:inherit}
+
+.empty{text-align:center;color:var(--muted);font-size:13.5px;padding:30px 20px}
+.empty .eic{font-size:38px;opacity:.3;margin-bottom:8px}
+
+@media(min-width:760px){
+  body{padding-bottom:0}
+  .tabbar{position:sticky;bottom:0;max-width:760px;margin:0 auto;border-radius:14px 14px 0 0}
+}
+.drawer::-webkit-scrollbar{width:3px}
+.drawer::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2)}
+</style>
+</head>
+<body>
+
+<div class="appbar">
+  <button class="burger" onclick="openDrawer()" aria-label="Меню">☰</button>
+  <div class="title"><svg class="applogo" viewBox="0 0 322 46" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LANGUST">
+<g font-family="Inter,Arial,sans-serif" font-weight="800" font-size="42" fill="#fff">
+<text x="2" y="35">L</text><text x="42" y="35">A</text><text x="88" y="35">N</text>
+<text x="136" y="35">G</text><text x="188" y="35">U</text><text x="234" y="35">S</text><text x="276" y="35">T</text>
+</g>
+<g>
+<rect x="4" y="40" width="26" height="4" rx="2" fill="#29ABE2"/>
+<rect x="44" y="40" width="30" height="4" rx="2" fill="#E84C88"/>
+<rect x="90" y="40" width="32" height="4" rx="2" fill="#F7941D"/>
+<rect x="138" y="40" width="34" height="4" rx="2" fill="#7AC943"/>
+<rect x="190" y="40" width="30" height="4" rx="2" fill="#F1512E"/>
+<rect x="236" y="40" width="28" height="4" rx="2" fill="#FFC20E"/>
+<rect x="278" y="40" width="26" height="4" rx="2" fill="#C724F0"/>
+</g></svg></div>
+  <button class="editbtn" id="editbtn" onclick="toggleEdit()">✏️</button>
+</div>
+
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<nav class="drawer" id="drawer">
+  <div class="dlogo"><svg viewBox="0 0 322 46" style="height:22px;width:auto" role="img" aria-label="LANGUST"><g font-family="Inter,Arial,sans-serif" font-weight="800" font-size="42" fill="#fff"><text x="2" y="35">L</text><text x="42" y="35">A</text><text x="88" y="35">N</text><text x="136" y="35">G</text><text x="188" y="35">U</text><text x="234" y="35">S</text><text x="276" y="35">T</text></g><g><rect x="4" y="40" width="26" height="4" rx="2" fill="#29ABE2"/><rect x="44" y="40" width="30" height="4" rx="2" fill="#E84C88"/><rect x="90" y="40" width="32" height="4" rx="2" fill="#F7941D"/><rect x="138" y="40" width="34" height="4" rx="2" fill="#7AC943"/><rect x="190" y="40" width="30" height="4" rx="2" fill="#F1512E"/><rect x="236" y="40" width="28" height="4" rx="2" fill="#FFC20E"/><rect x="278" y="40" width="26" height="4" rx="2" fill="#C724F0"/></g></svg><span style="font-size:11px;opacity:.5;margin-left:6px">v6</span><button class="dclose" onclick="closeDrawer()">✕</button></div>
+
+  <div class="ns"><div class="nl ref"><span class="dot"></span>Ежедневное</div>
+  <div class="ni active" onclick="go('today',this)">☀️ Сегодня</div>
+  <div class="ni" onclick="go('fav',this)">⭐ Избранное / в работе</div>
+  <div class="ni" onclick="go('home',this)">🗺️ Карта воронки</div>
+  <div class="ni" onclick="go('matrix',this)">🧩 Матрица контента</div>
+  <div class="ni" onclick="go('howto',this)">🧭 Как пользоваться</div></div>
+
+  <div class="ns"><div class="nl e1"><span class="dot"></span>Этап 1 · Корень зла</div>
+  <div class="ni" onclick="go('e1_idea',this)">💡 Смысл + лид-магнит</div>
+  <div class="ni" onclick="go('e1_reels',this)">🎬 Рилсы: вскрыть боль</div>
+  <div class="ni" onclick="go('e1_posts',this)">📝 Посты «Зачем английский»</div>
+  <div class="ni" onclick="go('e1_comments',this)">💬 Комментарии (угон)</div>
+  <div class="ni" onclick="go('e1_hooks',this)">⚡ Хуки боли и провокации</div></div>
+
+  <div class="ns"><div class="nl e2"><span class="dot"></span>Этап 2 · Выгода</div>
+  <div class="ni" onclick="go('e2_idea',this)">💡 Смысл + 8 ступеней</div>
+  <div class="ni" onclick="go('e2_reels',this)">🎬 Рилсы: диагностика</div>
+  <div class="ni" onclick="go('e2_proof',this)">📹 Рилсы: доказательства</div>
+  <div class="ni" onclick="go('e2_conv',this)">💰 Рилсы: конверсия</div>
+  <div class="ni" onclick="go('e2_direct',this)">📩 Скрипты директа</div>
+  <div class="ni" onclick="go('e2_funnel',this)">🤖 Бот + сторис</div>
+  <div class="ni" onclick="go('e2_price',this)">💳 Цены и возражения</div></div>
+
+  <div class="ns"><div class="nl e3"><span class="dot"></span>Этап 3 · Смыслы</div>
+  <div class="ni" onclick="go('e3_idea',this)">💡 Смысл + 5 нервов</div>
+  <div class="ni" onclick="go('e3_reels',this)">🧬 Рилсы: наука о мозге</div>
+  <div class="ni" onclick="go('e3_posts',this)">📌 Прогревающие посты</div>
+  <div class="ni" onclick="go('e3_forum',this)">🌐 Посты для форума</div>
+  <div class="ni" onclick="go('e3_nlp',this)">🧠 НЛП-приёмы (10)</div></div>
+
+  <div class="ns"><div class="nl ref"><span class="dot"></span>Сквозное</div>
+  <div class="ni" onclick="go('x_persona',this)">🎭 Персонаж «Афина»</div>
+  <div class="ni" onclick="go('x_tone',this)">💬 Тон, стиль, съёмка</div>
+  <div class="ni" onclick="go('x_pos',this)">🎯 Позиционирование</div>
+  <div class="ni" onclick="go('x_aud',this)">👩 Аудитория (6 болей)</div>
+  <div class="ni" onclick="go('x_kw',this)">🔑 Кодовые слова</div>
+  <div class="ni" onclick="go('x_heads',this)">📰 50 заголовков</div>
+  <div class="ni" onclick="go('x_plan',this)">📅 План + стратегия</div>
+  <div class="ni" onclick="go('x_agents',this)">🤝 Агентская модель</div></div>
+
+  <div class="ns"><div class="nl ref"><span class="dot"></span>Справочник</div>
+  <div class="ni" onclick="go('r_method',this)">📚 Методика 918 часов</div>
+  <div class="ni" onclick="go('r_legal',this)">⚖️ Юридическое</div>
+  <div class="ni" onclick="go('r_data',this)">💾 Данные и сброс</div></div>
+</nav>
+
+<main id="main"></main>
+
+<div class="tabbar">
+  <button class="active" id="tab-today" onclick="go('today',null);setTab('today')"><span class="ic">☀️</span>Сегодня</button>
+  <button id="tab-search" onclick="go('search',null);setTab('search')"><span class="ic">🔍</span>Поиск</button>
+  <button id="tab-fav" onclick="go('fav',null);setTab('fav')"><span class="ic">⭐</span>Избранное</button>
+  <button id="tab-home" onclick="go('home',null);setTab('home')"><span class="ic">🗺️</span>Воронка</button>
+</div>
+
+<div class="mo" id="modal"><div class="md"><h3 id="mtitle">Добавить</h3><div id="mbody"></div><div class="mdb"><button class="bs" onclick="closeM()">Отмена</button><button class="bp" onclick="saveM()">Сохранить</button></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+
+/* ===== ДАННЫЕ ===== */
+const pains=[
+{t:'1. Украденные отношения',d:'«Я уже не помню, когда просто обнимала ребёнка. Английский украл тёплые вечера. Я перестала быть просто мамой.»'},
+{t:'2. Социальное сравнение',d:'«Почему у всех получается, а у нас нет? В родительском чате пишут, что сын уже читает...»'},
+{t:'3. Потерянный ребёнок',d:'«Раньше горели глаза. Теперь молчит. Английский отнял у него веру в себя.»'},
+{t:'4. Хроническая тревога',d:'«Даже летом не могу расслабиться. Фоновое чувство: надо бы позаниматься.»'},
+{t:'5. Имитация обучения',d:'«Домашка делается для галочки. Ребёнок списывает с ГДЗ. Я закрываю глаза.»'},
+{t:'6. Отложенная жизнь',d:'«Книга, спорт, подруги — всё откладывается. Когда наладим английский — займусь собой.»'},
+];
+
+const keywords=[
+{w:'СТАРТ',d:'Пробный доступ 3 дня',e:2},{w:'ФОРМУЛА',d:'Пробный доступ 3 дня',e:2},{w:'ТАРИФ',d:'Выбор тарифа',e:2},
+{w:'ЛЕТО',d:'Летнее использование',e:1},{w:'АЛГОРИТМ',d:'Домашка без мамы',e:2},{w:'СЕМЬ',d:'Правило 7 встреч',e:2},
+{w:'СЛОВА',d:'5 шагов без зубрёжки',e:2},{w:'СЛУХ',d:'Аудирование до чтения',e:2},{w:'ТАБЛИЦА',d:'Проверка лексики',e:2},
+{w:'ЧТЕНИЕ',d:'План для тех кто не читает',e:2},{w:'ДОМАШКА',d:'Сократить время вдвое',e:1},{w:'ПЛАН',d:'15-минутный план',e:2},
+{w:'ЛОВУШКА',d:'Ловушки Spotlight',e:2},{w:'СИСТЕМА',d:'Как учить системно',e:1},{w:'ЗАМЕНА',d:'Неделя vs репетитор',e:2},
+{w:'КОСТЫЛЬ',d:'Передать ответственность',e:2},{w:'ФУНДАМЕНТ',d:'Мини-тест на базу',e:2},{w:'ПРОБЕЛ',d:'Тест на пробелы',e:2},
+{w:'ЧЕСТНО',d:'Чек-лист: без ГДЗ',e:2},{w:'ПОМОЩЬ',d:'Начать системно',e:2},{w:'АНТИГДЗ',d:'Чек-лист против ГДЗ',e:1},
+{w:'СВОБОДА',d:'Первый модуль бесплатно',e:2},{w:'ЧАЙ',d:'Кейс: мама пьёт чай сама',e:2},{w:'КОНСТРУКТОР',d:'Система на одном уроке',e:2},
+{w:'УРОК',d:'Модуль бесплатно 1 день',e:2},{w:'ЧЕК-ЛИСТ',d:'Слова без нервов',e:1},{w:'ДИАГНОЗ',d:'Персональная диагностика',e:2},
+{w:'МИССИЯ',d:'История + спецпредложение',e:3},{w:'СЕГОДНЯ',d:'Финальный оффер',e:2},{w:'АБОНЕМЕНТ',d:'Неделя символически',e:2},
+{w:'МУЛЬТЫ',d:'Мультфильмы для погружения',e:1},{w:'ТРЕКЕР',d:'Трекер повторений',e:2},{w:'ВЕРА',d:'Ситуация успеха',e:1},
+{w:'РАЗБОР',d:'Где ломается система',e:1},{w:'НУЖЕН',d:'Нужен ли English',e:1},{w:'ШКОЛА',d:'Что даёт школа реально',e:1},
+{w:'ПОЧЕМУ',d:'Разбор на примере',e:1},{w:'МОТИВАЦИЯ',d:'Как появляется мотивация',e:3},{w:'УВЕРЕННОСТЬ',d:'Связь мозга и уверенности',e:3},
+{w:'ДЕНЬГИ',d:'Где утечка в оплате',e:2},{w:'БЫСТРО',d:'Как выучить быстрее',e:2},{w:'ПАМЯТЬ',d:'Таблица повторений',e:3},
+{w:'ИНСТРУКЦИЯ',d:'Как давать задания ребёнку',e:2},{w:'ЭМОЦИЯ',d:'10 приёмов для памяти',e:3},{w:'ОШИБКА',d:'Типичные ошибки детей',e:3},
+{w:'КОД',d:'Карточки с QR-кодами',e:3},{w:'СОН',d:'Вечерние ритуалы',e:3},{w:'ПОДСКАЗКА',d:'Контекстные подсказки',e:2},
+{w:'ФОКУС',d:'Чек-лист: перестать делать за ребёнка',e:1},{w:'СПОКОЙНО',d:'Недельный план без давления',e:2},{w:'ПОНИМАЮ',d:'Методика разбора',e:1},
+{w:'СИГНАЛ',d:'Мини-диагностика перегруза',e:1},{w:'ПОДДЕРЖКА',d:'Схема роли родителя',e:2},{w:'ПРОГРЕСС',d:'Шаблон отслеживания',e:2},
+{w:'ИГРА',d:'Игровые приёмы запоминания',e:2},{w:'ГОВОРЮ',d:'Памятка по произношению',e:2},{w:'ЧИТАЮ',d:'Алгоритм тренировки',e:2},
+{w:'ВЫБОР',d:'Чек-лист выбора курса',e:1},{w:'НЕЗАВЕРШЕНО',d:'Приёмы незавершённости (Зейгарник)',e:3},{w:'КОНТЕКСТ',d:'Контекст-зависимая память',e:3},
+{w:'ПУТАНИЦА',d:'Мини-урок по теме',e:2},{w:'ОРГАНИЗАТОР',d:'Шаблон распорядка',e:2},{w:'ВОИН',d:'Защита от ярлыков',e:3},
+{w:'ГОВОРИТ',d:'Система чтобы ребёнок заговорил',e:2},{w:'ПРАВО',d:'Пробный доступ',e:2},{w:'ЦВЕТ',d:'Гостевой доступ',e:2},
+{w:'ПАВИЛЬОН',d:'Лучший разбор темы',e:2},{w:'СПОСОБНЫЙ',d:'Диагностика проблемы',e:2},{w:'МОЗГ',d:'5 фраз для нейропластичности',e:3},
+];
+
+const headlines=[
+{tag:'Боль',h:'Этот способ «помогать» убивает уверенность — особенно если у вас первоклассник'},
+{tag:'Боль',h:'Всего одна ошибка, из-за которой дети начинают ненавидеть английский — и 99% родителей её совершают'},
+{tag:'Боль',h:'Вся правда о школьном английском — если вы мама младшеклассника'},
+{tag:'Боль',h:'Что будет, если не вмешиваться в проблему английского уже сейчас'},
+{tag:'Боль',h:'Главный признак, что ребёнку тяжело на уроках — даже если он молчит'},
+{tag:'Ошибки',h:'Вот метод, который работает даже если вы сами «не дружите» с английским'},
+{tag:'Ошибки',h:'Ошибка, из-за которой английский превращается в стресс — для мам'},
+{tag:'Ошибки',h:'Самый страшный сценарий в 3 классе — и как его избежать уже завтра'},
+{tag:'Ошибки',h:'Единственный реальный способ не потерять деньги, если вы новичок в онлайн-обучении'},
+{tag:'Ошибки',h:'Чего нельзя делать при подготовке к школьным урокам — особенно если ребёнок чувствительный'},
+{tag:'Провокация',h:'Какой самый худший метод обучения английскому используют 99% людей'},
+{tag:'Провокация',h:'Что творит всего одна правильная подача материала с мозгом ребёнка — вы удивитесь'},
+{tag:'Провокация',h:'Вот что нельзя делать, если вы новичок в помощи ребёнку с уроками'},
+{tag:'Провокация',h:'Скрытый главный признак популярного «хорошего ученика»'},
+{tag:'Провокация',h:'Стоит ли сейчас запариваться за оценки — особенно если у вас тревожный ребёнок'},
+{tag:'Разоблачение',h:'Вся правда про новый метод обучения английскому для младших школьников'},
+{tag:'Разоблачение',h:'Есть история — офигеть какая — про ребёнка, который ненавидел английский. Послушай'},
+{tag:'Разоблачение',h:'Это чаще всего убивает интерес к языку у всех детей'},
+{tag:'Разоблачение',h:'Этот способ «помощи» — почти обман при покупке онлайн-курса'},
+{tag:'Разоблачение',h:'Что будет, если всего неделю не делать уроки за ребёнка'},
+{tag:'Результат',h:'Вышло исследование: вам нужно всего лишь изменить формат занятий'},
+{tag:'Результат',h:'Что делать, чтобы уже завтра ребёнок начал выполнять задания сам'},
+{tag:'Результат',h:'Всего неделя без стресса — и ребёнок начинает понимать школьные задания'},
+{tag:'Результат',h:'Вот что творит системный английский с самооценкой ребёнка'},
+{tag:'Результат',h:'Главный признак того, что система действительно работает'},
+{tag:'«Я бы... но»',h:'Я бы попробовала тренажёр… но боюсь, что ребёнок не будет заниматься сам'},
+{tag:'«Я бы... но»',h:'Я бы отпустила контроль… но кто тогда проверит домашку'},
+{tag:'«Я бы... но»',h:'Я бы перестала делать уроки вместе… но она сразу плачет'},
+{tag:'«Я бы... но»',h:'Я бы не нанимала репетитора… но не знаю как иначе'},
+{tag:'Вот почему',h:'Вот почему ребёнок учит слова весь вечер и забывает к пятнице'},
+{tag:'Вот почему',h:'Вот почему 918 школьных уроков не дают свободного владения языком'},
+{tag:'Вот почему',h:'Вот почему диктанты в началке — ошибка по мнению авторов Spotlight'},
+{tag:'Вот почему',h:'Вот почему дети в Финляндии говорят по-английски, а у нас учат годами и молчат'},
+{tag:'С цифрами',h:'3 ошибки при домашке по английскому — и ребёнок уже у ГДЗ'},
+{tag:'С цифрами',h:'2 вопроса, которые раскроют реальный уровень ребёнка за 5 минут'},
+{tag:'С цифрами',h:'7 этапов работы с лексикой по Spotlight — в школе делают 1'},
+{tag:'С цифрами',h:'918 уроков английского за 9 лет — и большинство выпускников A2'},
+{tag:'Обрыв мысли',h:'Ваш ребёнок учит английский. Но каждый раз как будто с нуля. Вот почему...'},
+{tag:'Обрыв мысли',h:'Она 2 года делала домашку вместе с сыном. А потом произошло кое-что...'},
+{tag:'Обрыв мысли',h:'Учительница сказала, что он не способный. Но потом кое-что изменилось...'},
+{tag:'Личное',h:'Что я поняла, когда перестала делать домашку за ребёнка'},
+{tag:'Личное',h:'Что мне помогло объяснить ребёнку английский без скандалов'},
+{tag:'Личное',h:'Что я больше точно не буду делать на домашке по английскому'},
+{tag:'Личное',h:'Что изменилось, когда я перестала быть репетитором своего сына'},
+{tag:'Личное',h:'Что я поняла, уйдя из школы и создав свою систему'},
+{tag:'Личное',h:'Мне написала мама ученика. Её слова я запомню надолго.'},
+{tag:'Личное',h:'Почему я запретила слово «зубрить» в своей программе'},
+{tag:'Личное',h:'Одна фраза мамы ученика, которая стоит всего моего труда'},
+{tag:'Личное',h:'Что происходит с самооценкой ребёнка, когда он впервые делает домашку сам'},
+{tag:'Личное',h:'Почему я больше не использую слово «способности»'},
+];
+
+/* --- ЭТАП 1: хуки боли+провокации --- */
+const e1_hooks={
+'😢 Боль — узнавание':[
+'Если ребёнок открывает тетрадь по английскому и сразу зависает — это не лень.',
+'«Мам, а что тут делать?» — фраза, крадущая ваш вечер.',
+'Ребёнок учил слова весь вечер, а получил двойку. Объясняю почему.',
+'Домашка по английскому растягивается на два часа? Вот причина.',
+'Вы всё ещё делаете английский с ребёнком? Значит, вы — его костыль.',
+'Домашка до слёз: три часа в никуда.',
+'«Он просто ленится» — самая дорогая ошибка родителей.',
+'Сколько лет ваш ребёнок «учит английский»… и не говорит?',
+'У вашего ребёнка пятёрки, а по-английски он не говорит? Почему.',
+'2 летних месяца могут полностью стереть знания. Это факт.',
+'Кажется, что деньги уходят впустую? Я объясню почему.',
+'«Он не способный к языкам» — самый вредный ярлык.',
+'Ребёнок может часами сидеть в телефоне, но не хочет английский. Может, дело не в нём?',
+'Он тянет время. Просит воду. Становится раздражительным. Это не лень — это перегруз.',
+],
+'🔥 Провокация — охваты':[
+'Ваш ребёнок зря учит английский.',
+'Школа НЕ учит английскому.',
+'Словарные диктанты в началке — это не норма.',
+'Я запретила слово «зубрить» в своей системе.',
+'Мотивация детям НЕ нужна.',
+'918 уроков английского — и тишина. Куда уходит время?',
+'Вы платите за онлайн-курс, а ребёнок не понимает школьную программу?',
+'Ваш ребёнок делает домашку с ГДЗ? Вы знаете, что это значит.',
+'ГДЗ — это медленная смерть интеллекта. Докажу за 30 секунд.',
+'Если вы делаете домашку с ребёнком — вы забираете его шанс.',
+'80% родителей не видят главной ловушки Spotlight.',
+'Репетитор может не помочь вашему ребёнку.',
+'90% детей учат английский неправильно. И это не их вина.',
+'Английский нужен не всем детям. (Дочитайте до конца.)',
+],
+};
+
+/* --- ЭТАП 1: рилсы (вскрыть боль) — из пакета "Боль и Провокация" + провокации из диагностики --- */
+const e1_reels=[
+{num:1,hook:'Если ребёнок открывает тетрадь и сразу зависает — это не лень',rubric:'Диагностика боли',pack:'Пакет 1 «Боль»',kw:'ЗАБЫЛ',versions:[
+{v:'v1',body:'Хук: Если ребёнок открывает тетрадь по английскому и сразу зависает — это не лень.\n\nТекст: Часто мозг просто не понимает, с чего начать. Страница выглядит как опасность. Ребёнок замирает.\n\nЯ учу детей простому алгоритму: сначала найти знакомое, потом понять задачу, потом сделать шаг.\n\nПопробуйте сегодня: перед домашкой спросите — что ты здесь уже узнаёшь?\n\nCTA: Напишите ЗАБЫЛ.'}]},
+{num:5,hook:'Ваш ребёнок зря учит английский',rubric:'Провокация',pack:'Пакет 1 «Боль»',kw:'РАЗБОР',versions:[
+{v:'v1',body:'Хук: Ваш ребёнок зря учит английский.\n\n3 года → не читает. 5 лет → не говорит. Это не обучение. Это имитация.\n\nДело не в ребёнке. Ему просто не дали систему.\n\nCTA: Напишите РАЗБОР — покажу, где ломается.'}]},
+{num:6,hook:'Школа НЕ учит английскому',rubric:'Провокация',pack:'Пакет 1 «Боль»',kw:'ШКОЛА',versions:[
+{v:'v1',body:'Хук: Школа НЕ учит английскому.\n\nОна даёт базу, но говорить ребёнок там не научится. И это не проблема учителей — 45 минут, 30 детей.\n\nCTA: Напишите ШКОЛА — расскажу, что она реально даёт.'}]},
+{num:8,hook:'«Он просто ленится» — миф или защита?',rubric:'Психология боли',pack:'Пакет 1 «Боль»',kw:'ВЕРА',versions:[
+{v:'v1',body:'Хук: Лень — это часто защита.\n\nРебёнок не хочет снова почувствовать себя глупым. Не справляется — ругают — замыкается.\n\nМоя задача — разорвать этот круг. Маленькими шагами. Без критики.\n\nCTA: Напишите ВЕРА.'}]},
+{num:12,hook:'Вы всё ещё делаете английский с ребёнком? Значит, вы — его костыль.',rubric:'Провокация',pack:'Пакет 2 «Диагностика»',kw:'КОСТЫЛЬ',versions:[
+{v:'v1',body:'Хук: Пока вы сидите рядом — он не начнёт думать сам.\n\nВ моей системе есть алгоритм: посмотреть объяснение → упражнения → проверить → свободен. Без мамы.\n\nCTA: Напишите КОСТЫЛЬ — схема, как передать ответственность за 3 дня.'}]},
+{num:14,hook:'Ваш ребёнок делает домашку с ГДЗ? Это не лень — это симптом.',rubric:'Диагностика боли',pack:'Пакет 2 «Диагностика»',kw:'ЧЕСТНО',versions:[
+{v:'v1',body:'Хук: Он не ленивый — он не понимает. Учебник даёт задание без объяснений. Ребёнок идёт в ГДЗ.\n\nЯ учу детей разбирать задание по шагам.\n\nCTA: Напишите ЧЕСТНО — чек-лист «Домашка без ГДЗ».'}]},
+{num:41,hook:'99% родителей совершают эту ошибку на домашке по английскому',rubric:'Конверсия в лид-магнит',pack:'Пакет 5 «Конверсия»',kw:'ФОКУС',versions:[
+{v:'v1',body:'Хук: 99% родителей совершают эту ошибку.\n\nВы начинаете объяснять — ребёнок закрывается. Повышаете голос — он ещё больше не понимает.\n\nЗа 7 дней можно убрать сопротивление и включить интерес.\n\nCTA: Напишите ФОКУС — чек-лист «Как перестать делать уроки за ребёнка».'}]},
+{num:43,hook:'Главный признак, что ребёнку уже тяжело — даже если «всё нормально»',rubric:'Диагностика боли',pack:'Пакет 5 «Конверсия»',kw:'СИГНАЛ',versions:[
+{v:'v1',body:'Хук: Он тянет время. Просит воду. Становится раздражительным. Это не лень. Это перегруз.\n\nCTA: Напишите СИГНАЛ — мини-диагностика.'}]},
+{num:45,hook:'Страшнейшая ошибка — сравнивать ребёнка с одноклассниками',rubric:'Боль сравнения',pack:'Пакет 5 «Конверсия»',kw:'ПРОГРЕСС',versions:[
+{v:'v1',body:'Хук: Это убивает мотивацию за месяц. Сравнивать можно только с прошлой версией ребёнка.\n\nCTA: Напишите ПРОГРЕСС — шаблон отслеживания.'}]},
+{num:50,hook:'Ребёнок не способный? Проверьте это за 5 минут.',rubric:'Снятие ярлыка',pack:'Пакет 5 «Конверсия»',kw:'СПОСОБНЫЙ',versions:[
+{v:'v1',body:'Хук: «Он не способный» — это не диагноз. Это незакрытый пробел на определённом этапе.\n\nCTA: Напишите СПОСОБНЫЙ — диагностика.'}]},
+];
+
+/* --- ЭТАП 1: посты "Зачем английский" (провокация, раскол аудитории) --- */
+const e1_posts=[
+{title:'Пост 1: Провокация',tag:'Провокация',body:'Честно? Английский нужен не всем детям. Вот прям правда. Есть люди, которые живут без него и нормально себя чувствуют.\n\nНО.\n\nПочему тогда родители, у которых есть возможность, почти всегда стараются его дать?\n\nВы считаете английский обязательным или нет?'},
+{title:'Пост 2: Конфликт поколений',tag:'Провокация',body:'90% родителей говорят: «Мне английский не пригодился»\n\nИ при этом 80% из них хотят, чтобы ребёнок его знал.\n\nПарадокс? Или просто мир изменился?\n\nА вам английский пригодился в жизни?'},
+{title:'Пост 3: Страх упущенных возможностей',tag:'Страх',body:'Самое интересное в английском — не то, что он даёт. А то, что он ЗАБИРАЕТ, если его нет: обучение, работа, окружение.\n\nИ самое обидное — ты даже не узнаешь, что могло быть.\n\nЭто реально или преувеличение?'},
+{title:'Пост 4: Про школу',tag:'Спор',body:'Если честно, школа не учит английскому. Она даёт базу, но не результат.\n\nГде ребёнок должен научиться реально пользоваться языком?\n\nВы довольны уровнем английского в школе?'},
+{title:'Пост 5: Про «не хочет учить»',tag:'Спор',body:'Ребёнок не хочет учить английский. Но может часами сидеть в телефоне.\n\nМожет дело не в ребёнке? А в том, КАК ему дают язык?\n\nУ вас ребёнок хочет учить английский или приходится заставлять?'},
+{title:'Пост 6: Сравнение',tag:'Провокация',body:'Давайте честно. Если ребёнок 3 года учит английский, но не может читать и говорить — это нормально?\n\nКакой результат вы считаете нормальным за год обучения?'},
+{title:'Пост 7: Про ранний старт',tag:'Спор',body:'Сейчас модно начинать с 5–6 лет. Но кто-то учит 3 года и ноль результата, а кто-то за полгода даёт базу.\n\nДело в возрасте или в системе?'},
+{title:'Пост 8: Про деньги',tag:'Провокация',body:'Родители платят за английский годами. Результата нет. И это норма.\n\nПочему в других сферах мы так не делаем?'},
+{title:'Пост 9: Про будущее',tag:'Страх',body:'Через 10 лет английский будет как сейчас интернет — без него можно, но странно.\n\nКак думаете, переоценивают его важность?'},
+{title:'Пост 10: Финальный',tag:'Провокация',body:'Если убрать эмоции — английский это просто инструмент.\n\nВы хотите, чтобы у ребёнка было больше возможностей или столько же, сколько у большинства?\n\nЧто важнее — комфорт сейчас или возможности в будущем?'},
+];
+
+/* --- ЭТАП 1: комментарии (угон трафика) --- */
+const e1_comments=[
+{tag:'боль',t:'Скорая помощь — реагируем на боль',q:'Пост мамы: «Ребёнок ненавидит английский, домашку делаем со слезами»',c:'Знакомая ситуация по работе с сотнями учеников. Чаще слёзы — не про «сложно», а про «непонятно что делать». У Spotlight есть особенность, из-за которой дети теряются. Напишите слово СВЕТОФОР — пришлю короткий разбор.'},
+{tag:'провокация',t:'Другое мнение — вежливый вызов',q:'Пост эксперта: «Топ-5 игр для изучения английского»',c:'Интересная подборка! Как педагог добавлю: игры отлично работают, но без привязки к школьной программе это часто превращается в развлечение, а не учёбу. Могу рассказать, как связываю игру и учебник.'},
+{tag:'боль',t:'Экспертная загадка — создаём интригу',q:'Пост: «Ребёнок не запоминает слова»',c:'Дети «не запоминают» не потому что память плохая, а потому что их учат словам отдельно от текста. У меня есть упражнение, которое эту связь выстраивает за 1 занятие. Напишите МЕЛОДИЯ.'},
+{tag:'боль',t:'Поддержка — эмпатия с переходом',q:'Пост: «Потратили год на репетитора, результата нет»',c:'Это больно, когда вкладываешь и не видишь отдачи. Часто дело в том, что школьная программа требует ежедневной отработки, не одного занятия в неделю. Напишите — расскажу про систему.'},
+{tag:'боль',t:'Поисковый — под запрос родителей',q:'Пост: «Дочка во 2 классе, не понимает Present Simple»',c:'Частая ситуация. Present Simple в Spotlight вводится раньше, чем мозг готов к абстракции. Использую цветовую маркировку. Напишите — пришлю мини-разбор для 2 класса.'},
+{tag:'зачем',t:'Зачем английский 1: Провокация',q:'Пост: «А зачем вообще ребёнку английский?»',c:'Честно? Большинству он и правда не нужен. Вопрос только — хотите ли вы, чтобы ваш ребёнок был «как большинство»?'},
+{tag:'зачем',t:'Зачем английский 2: Про реальность',q:'Пост: «Английский — переоценённый навык»',c:'Английский — это уже не навык. Это как умение читать. Можно жить без него. Но качество жизни будет другое.'},
+{tag:'зачем',t:'Зачем английский 3: Про деньги',q:'Пост: «Мне английский не пригодился»',c:'Все самые высокооплачиваемые возможности так или иначе связаны с английским. Не из-за языка. А из-за доступа к миру.'},
+{tag:'зачем',t:'Зачем английский 4: Лёгкая ирония',q:'Пост: «Нафиг нам этот английский»',c:'Можно и без английского. Так же, как можно без интернета 🙂'},
+{tag:'зачем',t:'Зачем английский 5: Лидогенерация',q:'Общий пост про обучение детей',c:'Интересно, а вы сами сейчас используете английский в жизни? По ответу обычно сразу понятно, как будет у ребёнка.'},
+];
+
+/* --- ЭТАП 2: рилсы диагностика+решение --- */
+const e2_reels=[
+{num:2,hook:'«Мам, а что тут делать?» — как перестать быть переводчиком',rubric:'Самостоятельность',pack:'Пакет 1 «Боль»',kw:'АЛГОРИТМ',versions:[
+{v:'v1',body:'Хук: Знаете, почему ребёнок постоянно зовёт маму?\n\nНе потому что не знает слов. А потому что не понимает инструкцию. «Fill in the gaps» для него — просто шум.\n\nЯ учу детей одному и тому же алгоритму. Через пару недель — «Я знаю, что делать». Домашка — сам.\n\nCTA: Напишите АЛГОРИТМ — пришлю памятку.'}]},
+{num:3,hook:'Почему ребёнок забывает слова через день',rubric:'Методика',pack:'Пакет 1 «Боль»',kw:'СЕМЬ',versions:[
+{v:'v1 короткая',body:'Хук: Выучили слова — через день не помнит. Знакомо?\n\nЭто нормальная работа мозга. Без повторения слово живёт до диктанта — и стирается.\n\nЯ строю занятия иначе: слово встречается несколько раз в разных упражнениях.\n\nCTA: Напишите СЕМЬ — объясню правило 7 встреч.'},
+{v:'v2 с наукой',body:'Хук: Ребёнок учит слова весь вечер, а в пятницу снова двойка? Объясняю почему.\n\nВ XIX веке Герман Эббингауз доказал: мы забываем больше половины через час. Если не повторять правильно.\n\nКривая забывания. Ребёнок учит в понедельник — к пятнице не помнит. Не плохая память — нет системы.\n\nВ моей программе каждое слово проходит через чёткие интервалы. Без зубрёжки.\n\nCTA: Напишите ПАМЯТЬ — пришлю таблицу повторений.'}]},
+{num:4,hook:'Словарные диктанты: почему авторы Spotlight их не закладывали',rubric:'Методика',pack:'Пакет 1 «Боль»',kw:'ТАБЛИЦА',versions:[
+{v:'v1',body:'Хук: Знаете, что написано в Книге для учителя Spotlight?\n\nНовая лексика вводится через картинки и аудирование. Ребёнок сначала слышит — и только потом произносит.\n\nГде здесь словарный диктант? Его нет. Еженедельные диктанты — нарушение рекомендаций авторов.\n\nCTA: Напишите ТАБЛИЦА — пришлю критерии грамотной проверки.'}]},
+{num:7,hook:'Репетитор может не помочь',rubric:'Контраст с репетитором',pack:'Пакет 1 «Боль»',kw:'СИСТЕМА',versions:[
+{v:'v1',body:'Хук: Репетитор может не помочь вашему ребёнку.\n\nЕсли нет системы — это просто разговоры за деньги.\n\nCTA: Напишите СИСТЕМА — объясню разницу.'}]},
+{num:9,hook:'Правило семи встреч: почему одной зубрёжки мало',rubric:'Методика',pack:'Пакет 1 «Боль»',kw:'ТРЕКЕР',versions:[
+{v:'v1',body:'Хук: Почему ребёнок учит слова весь вечер — и не помнит?\n\nПол Нейшен: слово должно встретиться минимум 7 раз в разных контекстах. В школе — одна встреча.\n\nCTA: Напишите ТРЕКЕР — пришлю трекер повторений.'}]},
+{num:10,hook:'Почему финны не шарахаются от английского',rubric:'Мировой контекст',pack:'Пакет 1 «Боль»',kw:'МУЛЬТЫ',versions:[
+{v:'v1',body:'Хук: В Финляндии все прохожие отвечают по-английски спокойно. Почему?\n\nНе талант — система. Цель — понять и ответить, а не вызубрить правило. Без страха ошибаться.\n\nПринципы: сначала слышим и говорим — потом пишем.\n\nCTA: Напишите МУЛЬТЫ — расскажу, какие мультфильмы помогают.'}]},
+{num:11,hook:'Вы платите за онлайн-курс, а ребёнок не понимает школьную программу?',rubric:'Диагностика пробела',pack:'Пакет 2 «Диагностика»',kw:'ПРОБЕЛ',versions:[
+{v:'v1',body:'Хук: Вы платите за онлайн-курс, а ребёнок всё ещё не понимает школьную программу?\n\nЗначит, вы платите за «английский вообще», а не за решение проблемы. Там — Animals, Food. А в школе — Spotlight с конкретной структурой.\n\nМоя программа идёт строго по Spotlight.\n\nCTA: Напишите ПРОБЕЛ — тест на пробелы.'}]},
+{num:13,hook:'Репетитор — 5 тысяч в неделю. Моя система — цена двух занятий за год.',rubric:'Экономика',pack:'Пакет 2 «Диагностика»',kw:'ЗАМЕНА',versions:[
+{v:'v1',body:'Хук: Репетитор объясняет раз в неделю. А моя система доступна 24/7. Ребёнок пересматривает сложное объяснение сколько угодно раз.\n\nCTA: Напишите ЗАМЕНА — дам неделю доступа.'}]},
+{num:15,hook:'Есть одна тема в Spotlight 3 класса, которую дети не понимают из-за подачи',rubric:'Экспертность',pack:'Пакет 2 «Диагностика»',kw:'ПУТАНИЦА',versions:[
+{v:'v1',body:'Хук: Это Present Continuous. В учебнике он идёт после Present Simple — дети путаются. Я разделяю визуально: красный и синий цвет.\n\nCTA: Напишите ПУТАНИЦА — бесплатный мини-урок.'}]},
+{num:16,hook:'Перестаньте учить ребёнка английскому — будьте организатором',rubric:'Роль родителя',pack:'Пакет 2 «Диагностика»',kw:'ОРГАНИЗАТОР',versions:[
+{v:'v1',body:'Хук: Ваша задача — быть организатором. «У тебя урок по плану. Вот таймер. Через 15 минут расскажешь что понял». Это меняет роль с надзирателя на наставника.\n\nCTA: Напишите ОРГАНИЗАТОР — шаблон распорядка.'}]},
+{num:17,hook:'Spotlight — местами нелогичный учебник. Скажу страшное.',rubric:'Экспертность',pack:'Пакет 2 «Диагностика»',kw:'ЛОВУШКА',versions:[
+{v:'v1',body:'Хук: Дети путаются не потому что глупые. Там есть «ловушки». В 3 классе важное правило спрятано в середине модуля. Я ставлю «дорожные знаки».\n\nCTA: Напишите ЛОВУШКА — первый разбор.'}]},
+{num:18,hook:'80% проблем в 5 классе родом из начальной школы.',rubric:'Диагностика базы',pack:'Пакет 2 «Диагностика»',kw:'ФУНДАМЕНТ',versions:[
+{v:'v1',body:'Хук: «Не знает алфавит», «путает глаголы» — это проваленная база. Я создала систему для младших классов, чтобы закрыть дыры раз и навсегда.\n\nCTA: Напишите ФУНДАМЕНТ — мини-тест.'}]},
+{num:19,hook:'«Он просто не понимает» — где на самом деле ломается система',rubric:'Диагностика',pack:'Пакет 2 «Диагностика»',kw:'НУЖЕН',versions:[
+{v:'v1',body:'Хук: «Он не понимает» — это не диагноз. Это симптом. Аудирование? Грамматика? Инструкция к заданию? У каждого своя точка разрыва.\n\nCTA: Напишите НУЖЕН — поставим диагноз.'}]},
+{num:42,hook:'Что будет, если всего неделю не контролировать английский?',rubric:'Решение / снятие страха',pack:'Пакет 5 «Конверсия»',kw:'СПОКОЙНО',versions:[
+{v:'v1',body:'Хук: Вы боитесь, что всё «развалится». Но чаще разваливается не учёба — а уверенность.\n\nCTA: Напишите СПОКОЙНО — план занятий на неделю.'}]},
+{num:44,hook:'Единственный способ помочь, если вы сами не знаете английский',rubric:'Снятие возражения',pack:'Пакет 5 «Конверсия»',kw:'ПОДДЕРЖКА',versions:[
+{v:'v1',body:'Хук: Страх «я не смогу объяснить». Вам не нужно объяснять. Нужна правильная структура.\n\nCTA: Напишите ПОДДЕРЖКА — схема ролей.'}]},
+{num:46,hook:'Вышло исследование: дети запоминают слова иначе, чем взрослые',rubric:'Решение',pack:'Пакет 5 «Конверсия»',kw:'ИГРА',versions:[
+{v:'v1',body:'Хук: Зубрёжка работает хуже всего. Лучше — повторение через контекст и игру.\n\nCTA: Напишите ИГРА — подборка приёмов.'}]},
+{num:47,hook:'Стоит ли запариваться за произношение в 2–3 классе?',rubric:'Решение',pack:'Пакет 5 «Конверсия»',kw:'ГОВОРЮ',versions:[
+{v:'v1',body:'Хук: На раннем этапе важнее понимание и смелость говорить, чем идеальное произношение.\n\nCTA: Напишите ГОВОРЮ — памятка.'}]},
+{num:48,hook:'Что делать, чтобы уже завтра ребёнок начал читать увереннее',rubric:'Решение',pack:'Пакет 5 «Конверсия»',kw:'ЧИТАЮ',versions:[
+{v:'v1',body:'Хук: Он путается и стесняется. Нужно убрать страх ошибки.\n\nCTA: Напишите ЧИТАЮ — план на 10 минут в день.'}]},
+{num:49,hook:'Вот что нельзя делать при покупке онлайн-курса для ребёнка',rubric:'Критерии выбора',pack:'Пакет 5 «Конверсия»',kw:'ВЫБОР',versions:[
+{v:'v1',body:'Хук: Вы покупаете «громкие обещания». Смотрите не на рекламу, а на систему.\n\nCTA: Напишите ВЫБОР — список критериев.'}]},
+];
+
+/* --- ЭТАП 2: рилсы доказательства --- */
+const e2_proof=[
+{num:20,hook:'Ваня, 3 класс. Было «2», стало «4» за 2 месяца.',rubric:'Кейс',pack:'Пакет 2 «Диагностика»',kw:'ПРОГРЕСС',versions:[
+{v:'v1',body:'Хук: Нашли слабое место — не мог читать транскрипцию. 3 недели модуля «Чтение». Учительница не поверила.\n\nCTA: Напишите ПРОГРЕСС — начнём.'}]},
+{num:21,hook:'Вот как выглядит мой урок, за который платят деньги.',rubric:'Скринкаст',pack:'Пакет 3 «Доказательства»',kw:'УРОК',versions:[
+{v:'v1',body:'Хук: Ребёнок заходит и видит не страницу учебника, а одно конкретное задание. Повторяет слова. Система проверяет. Собирает предложение как пазл. 15 минут.\n\nCTA: Напишите УРОК — открою модуль бесплатно на 1 день.'}]},
+{num:22,hook:'Мне написала мама. Её слова я запомню надолго.',rubric:'Кейс',pack:'Пакет 3 «Доказательства»',kw:'ЧАЙ',versions:[
+{v:'v1',body:'Хук: «Я впервые за 2 года не плакала, когда он делал домашку. Я просто сидела рядом и пила чай».\n\nCTA: Напишите ЧАЙ.'}]},
+{num:23,hook:'Почему дети не боятся ошибаться в моём тренажёре?',rubric:'Скринкаст',pack:'Пакет 3 «Доказательства»',kw:'ПРАВО',versions:[
+{v:'v1',body:'Хук: Система не кричит «Ошибка!». Подсвечивает правильный вариант. Ребёнок спокойно исправляется. Формируется азарт, а не страх.\n\nCTA: Напишите ПРАВО — пробный доступ.'}]},
+{num:24,hook:'Что говорят школьные учителя о моих учениках?',rubric:'Кейс',pack:'Пакет 3 «Доказательства»',kw:'ПРОГРЕСС',versions:[
+{v:'v1',body:'Хук: Учитель спрашивает маму: «А вы репетитора наняли?». Потому что ребёнок начинает отвечать у доски.\n\nCTA: Напишите ПРОГРЕСС.'}]},
+{num:25,hook:'Почему в моём курсе невозможно заблудиться?',rubric:'Скринкаст',pack:'Пакет 3 «Доказательства»',kw:'ЦВЕТ',versions:[
+{v:'v1',body:'Хук: Все модули разбиты по цветам как в Spotlight. Жёлтый — первый модуль. Даже бабушка разберётся.\n\nCTA: Напишите ЦВЕТ — гостевой доступ.'}]},
+{num:26,hook:'Мне прислали видео. Ребёнок впервые читает вслух.',rubric:'Кейс',pack:'Пакет 3 «Доказательства»',kw:'ЧТЕНИЕ',versions:[
+{v:'v1',body:'Хук: 2 месяца назад боялся звука «th». Сейчас читает текст с выражением. Это не чудо — это система.\n\nCTA: Напишите ЧТЕНИЕ — чек-лист для начинающих читать.'}]},
+{num:30,hook:'Как записываю видеоуроки, которые потом смотрят сотни детей.',rubric:'Закулисье',pack:'Пакет 3 «Доказательства»',kw:'ПАВИЛЬОН',versions:[
+{v:'v1',body:'Хук: 40 минут на один 10-минутный ролик — выверяю каждое слово.\n\nCTA: Напишите ПАВИЛЬОН — лучший разбор темы.'}]},
+];
+
+/* --- ЭТАП 2: рилсы конверсия (ведут в бот/доступ) --- */
+const e2_conv=[
+{num:'13b',hook:'Репетитор — 5 тысяч в неделю. Моя система — цена двух занятий за год.',rubric:'Прямой контраст цены',pack:'Пакет 2 «Диагностика»',kw:'ЗАМЕНА',versions:[
+{v:'v1',body:'Хук: Репетитор объясняет раз в неделю. А моя система доступна 24/7. Ребёнок пересматривает сложное объяснение сколько угодно раз.\n\nCTA: Напишите ЗАМЕНА — дам неделю доступа.'}]},
+{num:'23b',hook:'Пробный доступ без риска — посмотрите сами',rubric:'Трипваер',pack:'Пакет 3 «Доказательства»',kw:'ПРАВО',versions:[
+{v:'v1',body:'Хук: Хотите, чтобы ребёнок сам разобрал одну тему за 15 минут?\n\nПробный доступ на 3 дня. Без оплаты, без обязательств. Посмотрите — и решайте.\n\nCTA: Напишите ПРАВО — открою доступ.'}]},
+];
+
+/* --- ЭТАП 3: рилсы наука о мозге --- */
+const e3_reels=[
+{num:31,hook:'Почему ребёнок помнит мультик, но забывает правило через 5 минут',rubric:'Наука: Зейгарник',pack:'Пакет 4 «Наука»',kw:'НЕЗАВЕРШЕНО',versions:[
+{v:'v1 чистая наука',body:'Хук: Вы замечали, что ребёнок может забыть правило через 5 минут… но помнит, на каком моменте остановился мультик?\n\nВ начале XX века психолог Блюма Зейгарник заметила: официанты идеально помнили неоплаченные заказы — и мгновенно забывали закрытые.\n\nНезавершённые действия мозг держит в напряжении. Завершённые — отпускает.\n\nЧто делать? Не заканчивайте на «всё, молодец». Оставьте крючок: «Мы не разобрали самое интересное слово».\n\nCTA: Напишите НЕЗАВЕРШЕНО — 5 приёмов без давления.'},
+{v:'v2 с продуктом',body:'Хук: Вы замечали, что ребёнок может забыть слово через 5 минут… но помнит, на каком моменте остановился мультик?\n\nМеня зовут Татьяна. Я работаю с младшими школьниками.\n\nЭффект Зейгарник: незавершённые действия запоминаются лучше.\n\nВ моей программе мы оставляем «крючки» — мозг хочет вернуться к материалу. Без давления.\n\nCTA: Напишите НЕЗАВЕРШЕНО — пример задания.'}]},
+{num:32,hook:'Можно учить 2 часа и забыть всё через день. Это нормально.',rubric:'Наука: Эббингауз',pack:'Пакет 4 «Наука»',kw:'ПАМЯТЬ',versions:[
+{v:'v1',body:'Хук: Ваш ребёнок не тупит. Просто вы учите слова так, как мозг их не сохраняет.\n\nГерман Эббингауз: через час забывается больше половины. Без правильного повторения.\n\nКривая забывания.\n\nРаботает так: повтор через час → через день → через несколько дней.\n\nCTA: Напишите ПАМЯТЬ — таблица повторений.'}]},
+{num:33,hook:'«Он меня не слышит» — вы даёте 5 инструкций сразу',rubric:'Наука: Миллер 7±2',pack:'Пакет 4 «Наука»',kw:'СЕМЬ',versions:[
+{v:'v1',body:'Хук: «Он меня не слышит» — самая частая фраза от мам.\n\nВы даёте: «сними куртку, помой руки, открой учебник, сядь ровно, достань тетрадь».\n\nДжордж Миллер: рабочая память удерживает 5–7 элементов. У детей — меньше. Как оперативка в телефоне.\n\nЧто работает: одна инструкция — одно действие.\n\nCTA: Напишите СЕМЬ — схема как давать инструкции.'}]},
+{num:34,hook:'Почему мультики запоминаются, а английский — нет',rubric:'Наука: Амигдала',pack:'Пакет 4 «Наука»',kw:'ЭМОЦИЯ',versions:[
+{v:'v1',body:'Хук: Ваш ребёнок может пересказать мультик в деталях… но не помнит слово, которое учил вчера.\n\nАмигдала — детектор важности. Смешно — запомнить. Скучно — удалить.\n\n«cat — это кошка» не работает. А если кошка орёт, прыгает — мозг сохраняет.\n\nCTA: Напишите ЭМОЦИЯ — 10 приёмов запоминания.'}]},
+{num:35,hook:'Если ваш ребёнок всегда отвечает правильно — он не учится',rubric:'Наука: Джонсон-Лэрд',pack:'Пакет 4 «Наука»',kw:'ОШИБКА',versions:[
+{v:'v1',body:'Хук: Сейчас будет неприятно. Если ребёнок всегда отвечает правильно — он не учится. Вообще.\n\nДжонсон-Лэрд: мозг строит связи только в момент ошибки.\n\nЧто работает: сначала попытка → обсуждение → правильный вариант.\n\nCTA: Напишите ОШИБКА — типичные ошибки детей.'}]},
+{num:36,hook:'15 минут перед сном сильнее, чем 2 часа днём',rubric:'Наука: консолидация',pack:'Пакет 4 «Наука»',kw:'СОН',versions:[
+{v:'v1',body:'Хук: Хотите, чтобы ребёнок учил английский во сне? Он уже это делает.\n\nВо сне информация из гиппокампа переносится в кору.\n\nЛучше учить 15 минут перед сном и повторить утром.\n\nCTA: Напишите СОН — вечерние ритуалы.'}]},
+{num:37,hook:'«Мой ребёнок гуманитарий» — вы ограничиваете его мозг одной фразой',rubric:'Наука: нейропластичность',pack:'Пакет 4 «Наука»',kw:'МОЗГ',versions:[
+{v:'v1',body:'Хук: «Мой ребёнок гуманитарий» — самый дорогой ярлык.\n\nНейропластичность: лондонские таксисты — у них увеличивается область пространственной памяти от обучения.\n\nКогда говорите ребёнку «не твоё» — заставляете мозг закостенеть.\n\nCTA: Напишите МОЗГ — 5 фраз для нейропластичности.'}]},
+{num:38,hook:'Ребёнок не может выучить 10 слов — но помнит всё про Roblox',rubric:'Наука: двойное кодирование',pack:'Пакет 4 «Наука»',kw:'КОД',versions:[
+{v:'v1',body:'Хук: Дело не в памяти. Дело в том, КАК вы даёте информацию.\n\nРичард Майер: запоминается лучше если поступает через разные каналы — вижу + слышу + делаю.\n\nCTA: Напишите КОД — карточки: произношение + картинка + действие.'}]},
+{num:39,hook:'Сколько лет ваш ребёнок «учит английский» — и не говорит?',rubric:'Методика: среда',pack:'Пакет 4 «Наука»',kw:'ГОВОРИТ',versions:[
+{v:'v1 под Финляндию',body:'Хук: Вы попали в мир мам, которые не «учат английский», а строят ребёнку будущее.\n\nДети не учат язык. Они впитывают его из среды — как родной.\n\nОни сначала понимают, и только потом начинают говорить. Месяцы тишины — это этап, не проблема.\n\nА теперь честно: сколько лет ваш ребёнок «учит английский» — и не говорит?\n\nПотому что его учат как взрослого. Правилами. Списками.\n\nCTA: Напишите ГОВОРИТ — система, где ребёнок начинает говорить.'}]},
+{num:27,hook:'Почему я ушла из школы и создала «Лангуст»?',rubric:'Личное / миссия',pack:'Пакет 3 «Доказательства»',kw:'МИССИЯ',versions:[
+{v:'v1',body:'Хук: Я видела одну картину: дети плачут над домашкой, родители злятся, учителя выгорают. Нужен «второй учитель» 24/7.\n\nCTA: Напишите МИССИЯ — письмо со спецпредложением.'}]},
+{num:28,hook:'Объявляю войну фразе «У ребёнка нет способностей к языку».',rubric:'Манифест',pack:'Пакет 3 «Доказательства»',kw:'ВОИН',versions:[
+{v:'v1',body:'Хук: Мозг ребёнка в 7–10 лет запрограммирован на языки. Если не учит — значит, ему неправильно объясняют.\n\nCTA: Напишите ВОИН — возьму под защиту.'}]},
+{num:29,hook:'Я запретила слово «зубрить» в своей системе.',rubric:'Философия',pack:'Пакет 3 «Доказательства»',kw:'КОНСТРУКТОР',versions:[
+{v:'v1',body:'Хук: Зубрить — запихивать без понимания. Мои ученики собирают английский как Лего.\n\nCTA: Напишите КОНСТРУКТОР.'}]},
+];
+
+/* --- ЭТАП 3: прогревающие посты (закреплённые + смысловые) --- */
+const e3_posts=[
+{title:'Закреплённый №1: Кто я и чем отличаюсь',body:'Меня зовут Татьяна Владимировна. Я помогаю детям разобраться со школьным английским без слёз и постоянной помощи мамы. Я не репетитор. Я создала тренажёр, встроенный в те же полчаса домашнего задания.\n\nМы работаем по тому же Spotlight, что в школе. Но не пропускаем этапы: сначала слышим слово, потом произносим, потом играем с ним — и только потом пишем. Ребёнок приходит в школу — всё знакомо. Домашка — сам. Мама свободна.\n\nДавайте знакомиться: напишите в комментариях, в каком классе ребёнок и что сейчас самое трудное. 👇'},
+{title:'Закреплённый №2: Главная боль и решение',body:'Второй класс. Мама пришла: «Учительница сказала, что он не способный». Я смотрю тетради — красная паста на каждом слове. Мальчик боялся открыть рот.\n\nМы начали не с учебника. Со звуков. С аудирования. С проговаривания. Без страха.\n\nЧерез три месяца мама написала: «Он впервые сам сделал домашку». Через полгода — пятёрка за четверть.\n\nХотите так же? Напишите СТАРТ — пришлю пробный доступ.'},
+{title:'Пост «500 рублей в месяц»',body:'1190 ₽ в месяц или 500 ₽? Давайте честно посчитаем.\n\nВариант 1. Помесячная — 1190 ₽. Без обязательств.\n\nВариант 2. Три класса сразу — 6590 ₽ вместо 9500. До 31 мая 2027 года. ≈500 ₽ в месяц.\n\nВариант 3. Бесплатный пробный доступ на 3 дня.\n\nНапишите ТАРИФ — помогу подобрать подходящий.'},
+{title:'Пост «Формула моего блога»',body:'Я помогаю детям разобраться со школьным английским без слёз и постоянной помощи мамы.\n\nКому и с чем. Младшим школьникам — с тем английским, который в школе.\n\nЧто это меняет. Ребёнок начинает понимать, что он делает. Перестаёт звать маму каждые пять минут.\n\nХотите попробовать? Напишите ФОРМУЛА — пробный доступ на три дня.'},
+];
+
+/* --- ЭТАП 3: форум (тёплый прогрев по смыслам) --- */
+const e3_forum=[
+{tag:'Вдохновение',title:'Пост 1: Мама, которая впервые выпила чай',body:'Одна мама написала мне: «Я впервые за месяц спокойно выпила чай, пока дочка делала английский». Месяц. Чай. В тишине.\n\nДо этого полчаса домашки превращались в полтора.\n\nПотом они попробовали систему. Ребёнок сделал домашнюю работу сам. За полчаса. Без мамы.\n\nЭто не волшебство. Это правильная последовательность: услышал слово, произнёс, понял, записал.\n\nНапишите мне в личные сообщения свой адрес электронной почты — пришлю пробный доступ на три дня.'},
+{tag:'Решение',title:'Пост 2: Первый шаг уже сегодня',body:'Один простой шаг.\n\nСегодня, когда ребёнок откроет учебник, не спрашивайте «Что задано?». Спросите: «Что ты здесь узнаёшь?»\n\nДальше нужна система. Ребёнок слышит слово, произносит, соединяет с картинкой — и только потом записывает.\n\nНапишите мне в личные сообщения свой адрес электронной почты.'},
+{tag:'Спор',title:'Пост 3: Дисциплина и мучение — разные вещи',body:'«Ребёнок должен учиться трудиться». Согласна. Но следует разделять труд и мучение.\n\nКогда ребёнок не понимает инструкцию — это беспомощность, не труд.\n\nНапишите мне в личные сообщения свой адрес электронной почты.'},
+{tag:'Страх',title:'Пост 4: Если ничего не менять',body:'Сейчас лето. Но английский никуда не делся.\n\nВ сентябре Spotlight станет сложнее. Если сейчас нет системы — осенью станет тяжелее.\n\nНапишите мне в личные сообщения. Пока лето, пока тихо.'},
+{tag:'Вдохновение',title:'Пост 5: «Мам, я сам»',body:'Эти два слова стоят всего: «Я сам».\n\nЧерез три недели мама написала: «Она сказала: мам, иди, я сама». Мама вышла из комнаты и заплакала — от облегчения.\n\nНапишите мне в личные сообщения.'},
+{tag:'Решение',title:'Пост 6: Как устроена домашняя работа',body:'Показываю на пальцах. Ребёнок слушает слово, повторяет, соединяет с картинкой, вставляет в диалог — и только потом записывает.\n\nНапишите мне в личные сообщения.'},
+{tag:'Спор',title:'Пост 7: «Мы сами так учились»',body:'«Мы сами так учились, зубрили, и ничего».\n\nНо какой ценой? Часами за учебником, слезами, «у меня нет способностей к языку».\n\nНапишите мне в личные сообщения.'},
+{tag:'Страх',title:'Пост 8: «А вдруг он не сможет сам?»',body:'Самостоятельность — не врождённое качество, а навык. Формируется через опоры.\n\nЧерез пару недель вы слышите: «Мам, я сам».\n\nНапишите мне в личные сообщения.'},
+{tag:'Решение',title:'Пост 9: Почему не нужен репетитор',body:'Репетитор — это не только деньги, но и время. 4 часа в неделю, которых у младшего школьника нет.\n\nНапишите мне в личные сообщения.'},
+{tag:'Спор',title:'Пост 10: Ребёнок не ленивый',body:'«Он просто ленивый». Лень — это часто защита.\n\nЕму нужна не критика, а ситуация успеха.\n\nНапишите мне в личные сообщения.'},
+{tag:'Страх',title:'Пост 11: Почему мама боится отпустить',body:'Многие мамы боятся перестать контролировать. Раньше без мамы не получалось — потому что не было опоры.\n\nНапишите мне в личные сообщения.'},
+{tag:'Вдохновение',title:'Пост 12: Как уходит чувство вины',body:'«Я недостаточно помогаю». Мама не должна быть репетитором. Её задача — дать ребёнку инструмент.\n\nНапишите мне в личные сообщения.'},
+{tag:'Страх',title:'Пост 13: «Я плохая мать»',body:'«Я плохая мать, раз не сижу с ним над английским». Лучшая помощь — дать инструмент, а не делать за ребёнка.\n\nНапишите мне в личные сообщения.'},
+{tag:'Решение',title:'Пост 14: Как попробовать бесплатно',body:'Просто предлагаю попробовать — бесплатно, три дня. Если подойдёт — останетесь. Если нет — ничего не потеряли.\n\nНапишите мне в личные сообщения. Пока лето.'},
+{tag:'Вдохновение',title:'Пост 15: История: «Не способный»',body:'«Учительница сказала, что он не способный». Через три месяца мама написала: «Он впервые сам сделал домашку».\n\nНе потому что стал «способным». А потому что ему дали систему.\n\nНапишите мне в личные сообщения.'},
+];
+
+/* --- ЭТАП 2: скрипты директа --- */
+const directs=[
+{t:'Главный скрипт (Хормози)',body:'→ Получаем кодовое слово:\n«Татьяна, здравствуйте! Я вижу, тема откликнулась. Чтобы отправить вам не просто видео, а разбор именно той темы, которая нужна вашему ребёнку — скажите: в каком он классе?»\n\n→ Получаем ответ «2 класс»:\n«Поняла. Для 2 класса самая проблемная тема — глагол "can" и путаница с "have got". Держите разбор именно этого модуля из Spotlight 2: [ссылка]. И бонусом — 3 дня бесплатного доступа: [ссылка]. Что скажете?»'},
+{t:'Скрипт «Диагностика» (ДИАГНОЗ)',body:'Три вопроса:\n1. В каком классе ребёнок?\n2. Что сейчас самое трудное: слова, грамматика или чтение?\n3. Сколько обычно длится домашка по английскому?\n\nПосле ответов → «диагноз» точно под их боль → пробный доступ.'},
+{t:'Скрипт «Открытый вопрос»',body:'Комментарий от мамы → спросить:\n«Интересно, а сколько вашему ребёнку и что уже пробовали?»\n\nЧасто по ответу можно сразу понять, где затык. Переводит в диалог и дальше в продажу.'},
+{t:'Скрипт «Сопровождение» (не сливать горячих)',body:'Через 24 часа молчания после лид-магнита → написать:\n«Как ваш ребёнок? Успели попробовать? Если есть вопросы — пишите, разберём вместе»\n\nТон: мягкий, не продающий, заботливый.'},
+];
+
+const objections=[
+{q:'«Зачем ещё один английский? Нагрузка и так большая»',a:'Лангуст — не второй английский поверх школьного. Это тот же Spotlight, только понятный. Встраиваемся в те полчаса домашки, которые уже есть. Ничего дополнительного — только порядок вместо хаоса.'},
+{q:'«Это дорого»',a:'500 рублей в месяц — меньше одного занятия с репетитором. Репетитор за год: 60 000–96 000 ₽. Лангуст 3 класса: 6 590 ₽ за весь период 2–4 класса.'},
+{q:'«Мой ребёнок не будет заниматься сам»',a:'Именно для этого и создан тренажёр — для того, кто теряется. Система даёт алгоритм. Через 1–2 недели большинство начинают заходить сами.'},
+{q:'«Хочу сначала попробовать»',a:'Напишите кодовое слово ФОРМУЛА — 3 дня бесплатного доступа. Без оплаты, без обязательств.'},
+{q:'«Мы уже занимаемся с репетитором»',a:'Лангуст не конкурирует с репетитором. Репетитор объясняет раз в неделю. Тренажёр закрепляет каждый день в те же полчаса домашки.'},
+{q:'«Я сама не знаю английский»',a:'Вам не нужно знать английский. Ваша задача — дать ребёнку инструмент. Тренажёр объясняет сам.'},
+{q:'«А если не поможет?»',a:'Есть 3 дня бесплатно без обязательств. Посмотрите, дайте ребёнку попробовать — и тогда принимайте решение.'},
+{q:'«Дорого платить за год вперёд»',a:'Поэтому есть помесячная оплата — 1 190 ₽ за нужный класс. Без обязательств. Или начните с 3 дней бесплатно.'},
+];
+
+const leadmags=[
+{kw:'ФОКУС',name:'«Как перестать делать уроки за ребёнка»',desc:'Чек-лист в 5 шагов + схема передачи ответственности.',res:'Ребёнок берёт ответственность',e:1},
+{kw:'ВЫБОР',name:'«Чек-лист выбора онлайн-курса английского»',desc:'8 критериев: синхронизация со школой, самостоятельность, формат обратной связи, цена.',res:'Не потратить деньги впустую',e:1},
+{kw:'СЕМЬ',name:'«7 дней без слёз: мини-план английского»',desc:'7-дневный план по 15 минут: диагностика → страх ошибки → формат → игра → чтение → мини-успех → система.',res:'Вечера без скандалов',e:2},
+{kw:'ПАМЯТЬ',name:'«Таблица интервальных повторений для Spotlight»',desc:'Готовая таблица: выучил слово → когда повторить (1 час, 1 день, 4 дня, 2 недели).',res:'Слова не «вылетают» за ночь',e:2},
+{kw:'НЕЗАВЕРШЕНО',name:'«5 приёмов незавершённости для домашки»',desc:'Как использовать эффект Зейгарник в занятиях — без давления и нытья.',res:'Ребёнок сам возвращается к упражнению',e:3},
+{kw:'ОШИБКА',name:'«Типичные ошибки детей в Spotlight»',desc:'10 самых частых ошибок 2–4 класс + что за ними стоит + упражнение для исправления.',res:'Ошибки становятся точками роста',e:3},
+];
+
+const nlpItems=[
+{n:'Пресуппозиция',d:'Утверждение подаётся как данность.',e:'«Когда система выстроена так, ребёнок не нуждается в постоянной помощи» — встроено что система = единственный путь.'},
+{n:'Рефрейминг',d:'Смена рамки: «помощь мамы» → «зависимость от мамы».',e:'«Когда мама сидит рядом и переводит — она не помогает, а создаёт зависимость.»'},
+{n:'Контраст (Траут)',d:'Репетитор vs тренажёр, хаос vs система.',e:'«Репетитор — 4 часа в неделю. Тренажёр — ноль дополнительного времени.»'},
+{n:'Иллюзия выбора',d:'Два варианта — оба ведут к нужному действию.',e:'«Если подойдёт — останетесь. Если нет — ничего не потеряли.»'},
+{n:'Трюизм',d:'Утверждение, с которым невозможно спорить.',e:'«Ни один родитель не хочет, чтобы ребёнок делал домашку три часа.»'},
+{n:'Якорение',d:'Связь образа с желаемым состоянием.',e:'«Чай в тишине» = облегчение. «Я сам» = гордость и выдох.'},
+{n:'SCORE',d:'Symptom → Cause → Outcome → Resource → Effect.',e:'«Симптом: слёзы. Причина: нет опоры. Ресурс: тренажёр. Эффект: свободный вечер.»'},
+{n:'Сдвиг локуса контроля',d:'С «меня заставляют» на «я выбираю».',e:'«Тратить вечера на роль репетитора, когда есть инструмент — выбор, который каждый делает сам.»'},
+{n:'Субмодальностный сдвиг',d:'Меняем характеристики внутреннего образа.',e:'«Ребёнок открывает учебник — и видит не стену, а знакомые слова.»'},
+{n:'Метафора порядка',d:'Хаос vs система как основная метафора.',e:'«Не магия. Это правильная последовательность: услышал → произнёс → понял → записал.»'},
+];
+
+const plan15=[
+{day:1,angle:'Вдохновение',theme:'Мама, которая впервые выпила чай',kw:'ЧАЙ',col:'#E8F5EE'},
+{day:2,angle:'Решение',theme:'Первый шаг уже сегодня',kw:'ПЕРВЫЙ',col:'#E8EEF7'},
+{day:3,angle:'Спор',theme:'«А как же дисциплина?»',kw:'ТРУД',col:'#FFF3E0'},
+{day:4,angle:'Страх',theme:'Что будет, если ничего не менять',kw:'СЦЕНАРИЙ',col:'#FDEAEA'},
+{day:5,angle:'Вдохновение',theme:'Как изменился вечер',kw:'ВЕЧЕР',col:'#E8F5EE'},
+{day:6,angle:'Решение',theme:'Как устроена домашка в тренажёре (скринкаст)',kw:'ТРЕНАЖЁР',col:'#E8EEF7'},
+{day:7,angle:'Спор',theme:'«Мы сами так учились, и ничего»',kw:'СРАВНЕНИЕ',col:'#FFF3E0'},
+{day:8,angle:'Страх',theme:'«А вдруг он не сможет сам?»',kw:'САМ',col:'#FDEAEA'},
+{day:9,angle:'Вдохновение',theme:'«Мам, я сам» — история ученицы',kw:'Я САМ',col:'#E8F5EE'},
+{day:10,angle:'Решение',theme:'Почему не нужен репетитор',kw:'ВМЕСТО',col:'#E8EEF7'},
+{day:11,angle:'Спор',theme:'«Ребёнок просто ленивый»',kw:'—',col:'#FFF3E0'},
+{day:12,angle:'Страх',theme:'Почему мама боится отпустить домашку',kw:'ДОВЕРИЕ',col:'#FDEAEA'},
+{day:13,angle:'Вдохновение',theme:'Как уходит чувство вины',kw:'ВИНА',col:'#E8F5EE'},
+{day:14,angle:'Страх',theme:'«Я плохая мать, раз не помогаю»',kw:'ЗАБОТА',col:'#FDEAEA'},
+{day:15,angle:'Решение',theme:'Как попробовать систему бесплатно',kw:'СТАРТ',col:'#E8EEF7'},
+];
+
+/* реестр данных рилсов для редактирования */
+const reelsData={'e1_reels':e1_reels,'e2_reels':e2_reels,'e2_proof':e2_proof,'e2_conv':e2_conv,'e3_reels':e3_reels};
+
+/* ==================== ДВИЖОК v6 ==================== */
+/* уникальный id для каждого контентного элемента = ключ хранения */
+function uid(section,idx){return section+'#'+idx;}
+
+/* ---------- хранилище (localStorage) ---------- */
+const LS='langust_v6_state';
+let STATE={done:{},fav:{},edits:{},matrix:{},todayDate:'',todayIdx:{e1_reels:0,e1_hooks:0}};
+function loadState(){try{const r=localStorage.getItem(LS);if(r)STATE=Object.assign(STATE,JSON.parse(r));}catch(e){}}
+function saveState(){try{localStorage.setItem(LS,JSON.stringify(STATE));}catch(e){}}
+loadState();
+
+function isDone(id){return !!STATE.done[id];}
+function isFav(id){return !!STATE.fav[id];}
+function toggleDone(id){STATE.done[id]?delete STATE.done[id]:STATE.done[id]=Date.now();saveState();}
+function toggleFav(id){STATE.fav[id]?delete STATE.fav[id]:STATE.fav[id]=Date.now();saveState();}
+/* ===== МАТРИЦА КОНТЕНТА: тема × ось × ракурс ===== */
+const AXES={
+  emotion:{label:'Эмоция',icon:'💗',angles:[
+    {v:'uznavanie',t:'Узнавание'},{v:'oblegchenie',t:'Облегчение'},{v:'nadezhda',t:'Надежда'},{v:'provokacia',t:'Провокация'},{v:'doverie',t:'Доверие'}]},
+  mechanic:{label:'Механика подачи',icon:'🎬',angles:[
+    {v:'diag',t:'Диагностика'},{v:'nauka',t:'Наука о мозге'},{v:'istoria',t:'Личная история'},{v:'keys',t:'Кейс ученика'},{v:'screencast',t:'Скринкаст/показ'},{v:'razobl',t:'Разоблачение системы'},{v:'mir',t:'А как у них'},{v:'money',t:'Экономика/деньги'},{v:'rol',t:'Роль родителя'},{v:'provok',t:'Провокация/вызов'},{v:'praktika',t:'Практика/польза'}]}
+};
+/* маппинг рубрика → механика (для автозаполнения) */
+const RUBRIC2MECH={
+  'Диагностика боли':'diag','Диагностика пробела':'diag','Диагностика базы':'diag','Диагностика':'diag','Снятие ярлыка':'diag',
+  'Наука: Зейгарник':'nauka','Наука: Эббингауз':'nauka','Наука: Миллер 7±2':'nauka','Наука: Амигдала':'nauka','Наука: Джонсон-Лэрд':'nauka','Наука: консолидация':'nauka','Наука: нейропластичность':'nauka','Наука: двойное кодирование':'nauka',
+  'Личное / миссия':'istoria','Манифест':'istoria','Философия':'istoria',
+  'Кейс':'keys',
+  'Скринкаст':'screencast','Закулисье':'screencast','Трипваер':'screencast',
+  'Экспертность':'razobl',
+  'Мировой контекст':'mir','Методика: среда':'mir',
+  'Экономика':'money','Контраст с репетитором':'money','Прямой контраст цены':'money',
+  'Роль родителя':'rol','Самостоятельность':'rol','Снятие возражения':'rol','Психология боли':'rol',
+  'Провокация':'provok','Боль сравнения':'provok',
+  'Методика':'praktika','Решение':'praktika','Решение / снятие страха':'praktika','Критерии выбора':'praktika','Конверсия в лид-магнит':'praktika'
+};
+/* авто-разложить весь контент по механике (однократно) */
+function autoSeedMatrix(){
+  if(STATE.seeded) return;
+  const sets=['e1_reels','e2_reels','e2_proof','e2_conv','e3_reels'];
+  sets.forEach(s=>reelsData[s].forEach((r,i)=>{
+    const mech=RUBRIC2MECH[r.rubric];
+    if(mech){const rid=uid(s,i); STATE.matrix[rid]=STATE.matrix[rid]||{}; STATE.matrix[rid].mechanic=STATE.matrix[rid].mechanic||{}; if(!STATE.matrix[rid].mechanic[mech])STATE.matrix[rid].mechanic[mech]=Date.now();}
+  }));
+  STATE.seeded=true; saveState();
+}
+function mSet(reelId,axis,angle){ // toggle одной клетки
+  STATE.matrix[reelId]=STATE.matrix[reelId]||{};
+  STATE.matrix[reelId][axis]=STATE.matrix[reelId][axis]||{};
+  const cell=STATE.matrix[reelId][axis];
+  cell[angle]?delete cell[angle]:cell[angle]=Date.now();
+  saveState();
+}
+function mHas(reelId,axis,angle){return !!(STATE.matrix[reelId]&&STATE.matrix[reelId][axis]&&STATE.matrix[reelId][axis][angle]);}
+function mCountReel(reelId){ // сколько клеток заполнено у темы
+  let n=0;const m=STATE.matrix[reelId]; if(!m)return 0;
+  Object.keys(AXES).forEach(ax=>{if(m[ax])n+=Object.keys(m[ax]).length;});
+  return n;
+}
+function mTotalAngles(){return Object.keys(AXES).reduce((s,ax)=>s+AXES[ax].angles.length,0);}
+function mNextEmpty(reelId){ // подсказка следующего пустого ракурса
+  for(const ax of Object.keys(AXES)){
+    for(const a of AXES[ax].angles){ if(!mHas(reelId,ax,a.v)) return {axis:ax,axisLabel:AXES[ax].label,angle:a.v,angleLabel:a.t}; }
+  }
+  return null;
+}
+function angleLabel(axis,v){const a=AXES[axis]&&AXES[axis].angles.find(x=>x.v===v);return a?a.t:v;}
+
+/* ---------- индекс всего контента для «Сегодня», избранного, поиска ---------- */
+/* type: reels|post|hook|comment|direct|kw|obj|forum ; секции и данные */
+function allItems(){
+  const out=[];
+  const push=(section,type,label,idx,title,text,extra)=>out.push({id:uid(section,idx),section,type,label,idx,title,text,extra});
+  const reelSets=[['e1_reels','🎬 Рилс · Этап 1'],['e2_reels','🎬 Рилс · Этап 2'],['e2_proof','📹 Рилс · Доказательства'],['e2_conv','💰 Рилс · Конверсия'],['e3_reels','🧬 Рилс · Наука']];
+  reelSets.forEach(([s,lab])=>reelsData[s].forEach((r,i)=>push(s,'reels',lab,i,r.hook,r.versions.map(v=>v.body).join('\n\n'),r.kw)));
+  Object.keys(e1_hooks).forEach((c,ci)=>e1_hooks[c].forEach((h,hi)=>push('e1_hooks','hook','⚡ Хук · '+c,ci+'.'+hi,h,h,'')));
+  e1_posts.forEach((p,i)=>push('e1_posts','post','📝 Пост «Зачем английский»',i,p.title,p.body,p.tag));
+  e3_posts.forEach((p,i)=>push('e3_posts','post','📌 Прогревающий пост',i,p.title,p.body,''));
+  e3_forum.forEach((p,i)=>push('e3_forum','forum','🌐 Пост для форума',i,p.title,p.body,p.tag));
+  e1_comments.forEach((c,i)=>push('e1_comments','comment','💬 Комментарий',i,c.t,c.c,c.tag));
+  directs.forEach((d,i)=>push('e2_direct','direct','📩 Скрипт директа',i,d.t,d.body,''));
+  headlines.forEach((h,i)=>push('x_heads','head','📰 Заголовок',i,h.h,h.h,h.tag));
+  return out;
+}
+
+/* ---------- прогресс ---------- */
+function progressReels(){
+  let done=0,total=0;
+  ['e1_reels','e2_reels','e2_proof','e2_conv','e3_reels'].forEach(s=>{
+    reelsData[s].forEach((r,i)=>{total++;if(isDone(uid(s,i)))done++;});
+  });
+  return {done,total};
+}
+
+/* ==================== ЭКРАН «СЕГОДНЯ» ==================== */
+function todayKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function pickToday(section){
+  /* берём первый неиспользованный элемент, иначе крутим по кругу */
+  const arr = section==='e1_hooks' ? flatHooks() : reelsData[section];
+  const n=arr.length; if(!n)return null;
+  let start=STATE.todayIdx[section]||0;
+  for(let k=0;k<n;k++){const i=(start+k)%n;const id=uid(section,i);if(!isDone(id))return {i,item:arr[i]};}
+  return {i:start%n,item:arr[start%n]};
+}
+function flatHooks(){const r=[];Object.keys(e1_hooks).forEach((c,ci)=>e1_hooks[c].forEach((h,hi)=>r.push({hook:h,cat:c,idx:ci+'.'+hi,ci,hi})));return r;}
+
+function renderToday(){
+  const pr=progressReels();
+  const reel=pickToday('e2_reels')||pickToday('e1_reels');
+  const painReel=pickToday('e1_reels');
+  const hooksFlat=flatHooks();
+  let hstart=STATE.todayIdx.e1_hooks||0; const hook=hooksFlat[hstart%hooksFlat.length];
+  const d=new Date();const dd=['вс','пн','вт','ср','чт','пт','сб'][d.getDay()];
+  const dateStr=d.getDate()+'.'+String(d.getMonth()+1).padStart(2,'0')+' · '+dd;
+
+  let reelId = painReel? uid('e1_reels',painReel.i):'';
+  let html=`<div class="st">☀️ Сегодня</div><div class="ss">${dateStr} · твой план на день. Отметил снятое — оно уйдёт из ротации.</div>
+  <div class="prog"><div class="pt2"><span class="plab">Отснято рилсов</span><span class="pval">${pr.done} из ${pr.total}</span></div>
+  <div class="pbar"><div style="width:${pr.total?Math.round(pr.done/pr.total*100):0}%"></div></div></div>`;
+
+  /* слот 1: рилс дня (этап 1 — вход) */
+  if(painReel){
+    const r=painReel.item;
+    html+=`<div class="todaycard"><div class="tch" style="background:linear-gradient(135deg,#E84C88,#C7356E)"><span>🎬 Рилс дня — вход (Этап 1)</span></div>
+    <div class="tcbody"><div class="tcmeta">${r.rubric} · кодовое слово ${r.kw}</div>
+    <div class="tctitle">${r.hook}</div>
+    <div class="tctext">${r.versions[0].body}</div>
+    <div class="tcacts">
+      <button class="actbtn copy" onclick="cpTxt(getReelText('e1_reels',${painReel.i}))">📋 Копировать</button>
+      <button class="actbtn done ${isDone(reelId)?'on':''}" onclick="tapDone('${reelId}',this)">${isDone(reelId)?'✓ Снято':'Отметить снятым'}</button>
+      <button class="actbtn" onclick="nextToday('e1_reels');renderToday()">↻ Другой</button>
+      <button class="actbtn council" onclick="openCouncil('e1_reels',${painReel.i})">🎯 Созвать консилиум</button>
+    </div></div></div>`;
+  }
+
+  /* слот 2: конверсионный/прогревающий рилс */
+  if(reel && reel.item!==painReel.item){
+    const r=reel.item; const rid=uid('e2_reels',reel.i);
+    html+=`<div class="todaycard"><div class="tch" style="background:linear-gradient(135deg,#7AC943,#5FA524)"><span>🎬 Рилс дня — прогрев (Этап 2)</span></div>
+    <div class="tcbody"><div class="tcmeta">${r.rubric} · кодовое слово ${r.kw}</div>
+    <div class="tctitle">${r.hook}</div>
+    <div class="tctext">${r.versions[0].body}</div>
+    <div class="tcacts">
+      <button class="actbtn copy" onclick="cpTxt(getReelText('e2_reels',${reel.i}))">📋 Копировать</button>
+      <button class="actbtn done ${isDone(rid)?'on':''}" onclick="tapDone('${rid}',this)">${isDone(rid)?'✓ Снято':'Отметить снятым'}</button>
+      <button class="actbtn" onclick="nextToday('e2_reels');renderToday()">↻ Другой</button>
+      <button class="actbtn council" onclick="openCouncil('e2_reels',${reel.i})">🎯 Созвать консилиум</button>
+    </div></div></div>`;
+  }
+
+  /* слот 3: хук дня */
+  if(hook){
+    html+=`<div class="todaycard"><div class="tch" style="background:linear-gradient(135deg,#C724F0,#A315C9)"><span>⚡ Хук дня</span></div>
+    <div class="tcbody"><div class="tcmeta">${hook.cat}</div>
+    <div class="tctitle">${hook.hook}</div>
+    <div class="tcacts">
+      <button class="actbtn copy" onclick="cpTxt(${JSON.stringify(hook.hook)})">📋 Копировать</button>
+      <button class="actbtn" onclick="nextToday('e1_hooks');renderToday()">↻ Другой</button>
+    </div></div></div>`;
+  }
+
+  /* слот 4: рутина дня */
+  html+=`<div class="card"><div class="ct">✅ Рутина на сегодня</div>
+  <p>• Снять и выложить <strong>рилс дня</strong> (сверху)</p>
+  <p>• Оставить <strong>30 комментариев</strong> под чужими постами → раздел «Комментарии»</p>
+  <p>• Ответить на входящие кодовые слова в директе → «Скрипты директа»</p>
+  <p style="margin-top:6px"><span class="tag tg">Алгоритм 2026: шеры · сохранения · комментарии важнее лайков</span></p></div>`;
+
+  document.getElementById('sec-today').innerHTML=html;
+}
+function nextToday(section){STATE.todayIdx[section]=((STATE.todayIdx[section]||0)+1);saveState();}
+function getReelText(section,i){return reelsData[section][i].versions.map(v=>v.body).join('\n\n');}
+function tapDone(id,btn){toggleDone(id);renderToday();toast(isDone(id)?'Отмечено снятым ✓':'Снято с отметки');}
+
+/* ==================== ИЗБРАННОЕ ==================== */
+function renderFav(){
+  const items=allItems().filter(x=>isFav(x.id));
+  let html=`<div class="st">⭐ Избранное / в работе</div><div class="ss">То, что ты отобрала на ближайшие дни. ${items.length} шт. Можно выгрузить списком.</div>`;
+  if(items.length){
+    html+=`<button class="ba" style="border-style:solid;color:var(--navy);border-color:var(--navy);margin-bottom:12px" onclick="exportFav()">⬇️ Выгрузить список в текст</button>`;
+    html+=items.map(x=>`<div class="item ${isDone(x.id)?'done':''}"><div class="ih" onclick="tItem(this)">
+    <div class="am"><div class="ak">${x.title}</div><div class="as">${x.label}${x.extra?' · '+x.extra:''}</div></div>
+    <button class="hstar on" onclick="event.stopPropagation();toggleFav('${x.id}');renderFav()" style="background:none;border:none;font-size:18px;color:var(--acc)">★</button>
+    <span class="arrow">▼</span></div>
+    <div class="ib"><div class="at">${x.text}</div>
+    <div class="acts"><button class="actbtn copy" onclick="cpTxt(${JSON.stringify(x.text)})">📋 Копировать</button>
+    <button class="actbtn done ${isDone(x.id)?'on':''}" onclick="toggleDone('${x.id}');renderFav()">${isDone(x.id)?'✓ Использовано':'Отметить'}</button></div>
+    </div></div>`).join('');
+  } else {
+    html+=`<div class="empty"><div class="eic">⭐</div>Пока пусто.<br>Жми звёздочку на любом рилсе, посте или хуке — и он появится здесь.</div>`;
+  }
+  document.getElementById('sec-fav').innerHTML=html;
+}
+function exportFav(){
+  const items=allItems().filter(x=>isFav(x.id));
+  const txt=items.map(x=>'=== '+x.label+' ===\n'+x.title+'\n\n'+x.text).join('\n\n\n');
+  cpTxt(txt,'Список избранного скопирован');
+}
+
+/* ==================== ПОИСК ==================== */
+function renderSearch(){
+  document.getElementById('sec-search').innerHTML=`<div class="st">🔍 Поиск по всему</div><div class="ss">Ищет по рилсам, постам, хукам, комментариям, скриптам и заголовкам.</div>
+  <div class="sw"><span class="si">🔍</span><input id="gsearch" placeholder="Например: репетитор, ГДЗ, диктант..." oninput="doSearch(this.value)"></div>
+  <div id="searchres"><div class="empty"><div class="eic">🔍</div>Начни вводить — покажу совпадения.</div></div>`;
+}
+function doSearch(q){
+  q=q.toLowerCase().trim();
+  const box=document.getElementById('searchres');
+  if(q.length<2){box.innerHTML=`<div class="empty"><div class="eic">🔍</div>Введи хотя бы 2 буквы.</div>`;return;}
+  const res=allItems().filter(x=>(x.title+' '+x.text+' '+(x.extra||'')).toLowerCase().includes(q)).slice(0,40);
+  if(!res.length){box.innerHTML=`<div class="empty"><div class="eic">🤷</div>Ничего не нашлось по «${q}».</div>`;return;}
+  box.innerHTML=`<div class="ss">Найдено: ${res.length}</div>`+res.map(x=>`<div class="item ${isDone(x.id)?'done':''}"><div class="ih" onclick="tItem(this)">
+  <div class="am"><div class="ak">${x.title}</div><div class="as">${x.label}${x.extra?' · '+x.extra:''}</div></div>
+  <button class="hstar ${isFav(x.id)?'on':''}" onclick="event.stopPropagation();toggleFav('${x.id}');doSearch(document.getElementById('gsearch').value)">${isFav(x.id)?'★':'☆'}</button>
+  <span class="arrow">▼</span></div>
+  <div class="ib"><div class="at">${x.text}</div>
+  <div class="acts"><button class="actbtn copy" onclick="cpTxt(${JSON.stringify(x.text)})">📋 Копировать</button></div></div></div>`).join('');
+}
+
+/* ==================== ГЛАВНАЯ / КАРТА ==================== */
+function renderHome(){
+  const pr=progressReels();
+  document.getElementById('sec-home').innerHTML=`<div class="st">🗺️ Карта воронки</div>
+  <div class="ss">Весь контент по трём этапам пути мамы: Корень зла → Выгода → Смыслы.</div>
+  <div class="fmap">
+  <div class="step s1" onclick="go('e1_idea',null)"><div class="fnum">1</div><div><div class="flab">🔴 Корень зла</div><div class="fsub">«Я не виновата» → подписка</div></div><span class="farr">›</span></div>
+  <div class="step s2" onclick="go('e2_idea',null)"><div class="fnum">2</div><div><div class="flab">🟢 Выгода</div><div class="fsub">«Работает и дёшево» → покупка</div></div><span class="farr">›</span></div>
+  <div class="step s3" onclick="go('e3_idea',null)"><div class="fnum">3</div><div><div class="flab">🟣 Смыслы</div><div class="fsub">«Возвращаю вечера» → дожим</div></div><span class="farr">›</span></div>
+  </div>
+  <div class="g2">
+  <div class="sc"><div class="sn">${pr.done}/${pr.total}</div><div class="sl">рилсов отснято</div></div>
+  <div class="sc"><div class="sn">${Object.keys(STATE.fav).length}</div><div class="sl">в избранном</div></div>
+  </div>
+  <div class="card"><div class="ct">⚡ Главная фраза</div>
+  <p class="editable" data-edit="mainphrase" style="font-size:16px;font-weight:700;color:var(--navy)">${ed('mainphrase','Ребёнок делает школьный Spotlight сам. Без репетитора. Без мамы.')}</p></div>
+  <div class="warn"><strong>⚠️ Юридически важно</strong>Лицензия ИП ≠ одобрение Минобра. Нельзя: «одобрено Минобром». Можно: «лицензированная программа доп. образования».</div>`;
+}
+function renderMatrix(){
+  // собираем все темы (рилсы) из всех разделов
+  const sets=[['e1_reels','🔴 Этап 1'],['e2_reels','🟢 Этап 2'],['e2_proof','🟢 Доказательства'],['e2_conv','🟢 Конверсия'],['e3_reels','🟣 Этап 3']];
+  const totAngles=mTotalAngles();
+  // общая статистика
+  let filled=0, themes=0;
+  sets.forEach(([s])=>reelsData[s].forEach((r,i)=>{themes++;filled+=mCountReel(uid(s,i));}));
+  const totalCells=themes*totAngles;
+  const pct=totalCells?Math.round(filled/totalCells*100):0;
+
+  let html=`<div class="st">🧩 Матрица контента</div>
+  <div class="ss">Каждая тема — не один ролик, а веер. Отмечай, каким ракурсом уже раскрыла. Круг не замыкается — идёшь по спирали.</div>
+  <div class="prog"><div class="pt2"><span class="plab">Раскрыто ракурсов всего</span><span class="pval">${filled} из ${totalCells}</span></div>
+  <div class="pbar"><div style="width:${pct}%"></div></div></div>
+  <div class="ss" style="margin-bottom:14px">${themes} тем × ${totAngles} ракурса (5 эмоций + 11 механик подачи). Нажми на тему — раскрой клетки. Клетка-таблетка: серая — не бралось, зелёная — раскрыто. Тапай, чтобы отметить.</div>`;
+
+  // фильтр по этапам
+  html+=`<div class="ft" id="mxft"></div><div id="mxlist"></div>`;
+  document.getElementById('sec-matrix').innerHTML=html;
+  document.getElementById('mxft').innerHTML=[['all','Все темы']].concat(sets.map(([s,l])=>[s,l])).map(([f,l],idx)=>`<div class="ftb ${idx===0?'active':''}" onclick="fMatrix(this,'${f}')">${l}</div>`).join('');
+  drawMatrix('all');
+}
+function fMatrix(el,f){document.querySelectorAll('#mxft .ftb').forEach(t=>t.classList.remove('active'));el.classList.add('active');drawMatrix(f);}
+function drawMatrix(filter){
+  const sets=[['e1_reels','🔴 Этап 1'],['e2_reels','🟢 Этап 2'],['e2_proof','🟢 Доказ.'],['e2_conv','🟢 Конв.'],['e3_reels','🟣 Этап 3']];
+  const totAngles=mTotalAngles();
+  let rows='';
+  sets.forEach(([s,lab])=>{
+    if(filter!=='all' && filter!==s) return;
+    reelsData[s].forEach((r,i)=>{
+      const rid=uid(s,i);
+      const cnt=mCountReel(rid);
+      const badgeCls=cnt===0?'z':(cnt>=totAngles?'f':'p');
+      const badgeTxt=cnt===0?'чистая':(cnt>=totAngles?'✓ вся':cnt+'/'+totAngles);
+      let axesHtml='';
+      Object.keys(AXES).forEach(ax=>{
+        const A=AXES[ax];
+        axesHtml+=`<div class="mxaxis"><div class="mxaxlab">${A.icon} ${A.label}</div><div class="mxcells">`+
+          A.angles.map(a=>`<button class="mxcell ${mHas(rid,ax,a.v)?'on':''}" onclick="event.stopPropagation();mSet('${rid}','${ax}','${a.v}');drawMatrix('${filter}')">${mHas(rid,ax,a.v)?'✓ ':''}${a.t}</button>`).join('')+
+          `</div></div>`;
+      });
+      const nx=mNextEmpty(rid);
+      const nextHtml = nx ? `<div class="mxnext" style="margin-top:11px;margin-bottom:0">💡 Не раскрыто: <strong>${nx.axisLabel} → ${nx.angleLabel}</strong>. Можно снять следующим.</div>` : `<div class="mxnext" style="margin-top:11px;margin-bottom:0;background:var(--e2bg);border-color:var(--e2);color:var(--e2)">🎉 Тема раскрыта со всех ракурсов!</div>`;
+      rows+=`<div class="mxrow" id="mx_${s}_${i}">
+        <div class="mxhead" onclick="document.getElementById('mx_${s}_${i}').classList.toggle('open')">
+          <div class="mxnum">${r.num}</div>
+          <div class="mxt"><div class="mxtitle">${r.hook}</div><div class="mxmeta">${lab} · ${r.rubric} · ${r.kw}</div></div>
+          <span class="mxbadge ${badgeCls}">${badgeTxt}</span><span class="mxarr">▼</span>
+        </div>
+        <div class="mxbody">${axesHtml}${nextHtml}
+        <button class="actbtn council" style="margin-top:11px;width:100%;flex:none" onclick="openCouncil('${s}',${i})">🎯 Созвать консилиум по этой теме</button>
+        </div>
+      </div>`;
+    });
+  });
+  document.getElementById('mxlist').innerHTML=rows||'<div class="empty"><div class="eic">🧩</div>Нет тем в этом фильтре.</div>';
+}
+
+function renderHowto(){
+  document.getElementById('sec-howto').innerHTML=`<div class="st">🧭 Как пользоваться</div><div class="ss">Инструмент для ежедневной работы, а не просто справочник.</div>
+  <div class="card"><div class="ct">☀️ Начинай с «Сегодня»</div><p>Нижняя панель → «Сегодня». Там уже готов план: рилс дня + хук + рутина. Отснял — жми «Отметить снятым», элемент уйдёт из ротации. Не нравится — «↻ Другой».</p></div>
+  <div class="card"><div class="ct">⭐ Избранное</div><p>Нашла крутой рилс, но не сегодня — жми звёздочку. Всё избранное собирается в отдельной вкладке, можно выгрузить списком в заметки.</p></div>
+  <div class="card"><div class="ct">✓ Отметки сохраняются</div><p>Всё, что ты отметила снятым или в избранном, а также правки текста — <strong>сохраняются в этом телефоне</strong>. Закрыла и открыла снова — всё на месте.</p></div>
+  <div class="card"><div class="ct">✏️ Редактирование</div><p>Кнопка ✏️ вверху справа → текст с пунктирной рамкой можно менять прямо пальцем. Правки сохраняются автоматически.</p></div>
+  <div class="card"><div class="ct">🎨 Цвета этапов</div>
+  <p><span class="tag" style="background:var(--e1bg);color:var(--e1)">🔴 Этап 1</span> холодные, вскрываем боль</p>
+  <p><span class="tag" style="background:var(--e2bg);color:var(--e2)">🟢 Этап 2</span> прогретые, ведём к покупке</p>
+  <p><span class="tag" style="background:var(--e3bg);color:var(--e3)">🟣 Этап 3</span> дожим и удержание</p></div>`;
+}
+function renderData(){
+  const pr=progressReels();
+  document.getElementById('sec-r_data').innerHTML=`<div class="st">💾 Данные и сброс</div><div class="ss">Всё хранится в памяти этого браузера/телефона.</div>
+  <div class="g2">
+  <div class="sc"><div class="sn">${Object.keys(STATE.done).length}</div><div class="sl">отмечено снятым</div></div>
+  <div class="sc"><div class="sn">${Object.keys(STATE.fav).length}</div><div class="sl">в избранном</div></div>
+  </div>
+  <div class="card"><div class="ct">ℹ️ Как это работает</div><p>Отметки «снято», избранное и правки текста сохраняются локально. Другой телефон или очистка данных браузера — начнётся с чистого листа.</p></div>
+  <div class="card"><div class="ct">⚠️ Сброс</div><p style="margin-bottom:10px">Обнулить все отметки «снято» и избранное. Тексты-правки тоже сбросятся. Отменить нельзя.</p>
+  <button class="bs" style="border-color:var(--e1);color:var(--e1)" onclick="resetAll()">Сбросить весь прогресс</button></div>`;
+}
+function resetAll(){openM('Точно сбросить?','<p style="font-size:14px">Все отметки «снято», избранное и правки будут удалены. Действие необратимо.</p>',()=>{STATE={done:{},fav:{},edits:{},todayDate:'',todayIdx:{e1_reels:0,e1_hooks:0}};saveState();toast('Всё сброшено');go('today',null);});}
+
+/* ==================== РЕДАКТИРУЕМЫЕ ТЕКСТЫ ==================== */
+function ed(key,def){return STATE.edits[key]!==undefined?STATE.edits[key]:def;}
+function bindEdits(){
+  document.querySelectorAll('[data-edit]').forEach(el=>{
+    el.oninput=()=>{STATE.edits[el.getAttribute('data-edit')]=el.innerText;saveState();};
+  });
+  applyEdit();
+}
+
+/* ==================== ШАПКИ / БЛОКИ ==================== */
+function ehdr(cls,kick,title,desc,meta){return `<div class="ehdr ${cls}"><div class="ekick">${kick}</div><div class="etitle">${title}</div><div class="edesc">${desc}</div>${meta?`<div class="emeta">${meta.map(m=>`<span>${m}</span>`).join('')}</div>`:''}</div>`;}
+function tbh(ic,title,hint,cnt){return `<div class="tbh">${ic?`<span class="ic">${ic}</span>`:''}${title?`<span class="tt">${title}</span>`:''}${hint?`<span class="hint">${hint}</span>`:''}${cnt!=null?`<span class="cnt">${cnt}</span>`:''}</div>`;}
+
+/* ==================== РИЛСЫ (общий рендер) ==================== */
+function renderReels(section,data,secId,headerHtml,ic,blockTitle,blockHint){
+  document.getElementById(secId).innerHTML=headerHtml+
+  `<div class="tblock">${tbh(ic,blockTitle,blockHint,data.length+' шт.')}<div id="${section}-l"></div>
+  <button class="ba" onclick="addReel('${section}')">+ Добавить сценарий</button></div>`;
+  drawReels(section,data);
+}
+function drawReels(section,data){
+  document.getElementById(section+'-l').innerHTML=data.map((r,i)=>{
+    const id=uid(section,i);
+    return `<div class="item ${isDone(id)?'done':''}" id="${section}_${i}">
+    <div class="ih" onclick="tItem(this)"><div class="an">${r.num}</div>
+    <div class="am"><div class="ak">${r.hook}</div><div class="as">${r.rubric}${r.pack?' · '+r.pack:''}</div></div>
+    <button class="hstar ${isFav(id)?'on':''}" onclick="event.stopPropagation();toggleFav('${id}');drawReels('${section}',reelsData['${section}'])">${isFav(id)?'★':'☆'}</button>
+    <span class="aw">${r.kw}</span><span class="arrow">▼</span></div>
+    <div class="ib">
+    ${r.versions.map((v,vi)=>`<div class="vlabel"><span class="bg b${(vi%3)+1}">${v.v}</span>${vi>0?`<button class="bd" onclick="reelsData['${section}'][${i}].versions.splice(${vi},1);drawReels('${section}',reelsData['${section}'])">✕</button>`:''}</div>
+    <div class="at editable" data-edit="${section}_v_${i}_${vi}">${ed(section+'_v_'+i+'_'+vi,v.body)}</div>`).join('')}
+    <div class="acts">
+      <button class="actbtn copy" onclick="cpTxt(getReelText('${section}',${i}))">📋 Копировать</button>
+      <button class="actbtn done ${isDone(id)?'on':''}" onclick="toggleDone('${id}');drawReels('${section}',reelsData['${section}'])">${isDone(id)?'✓ Снято':'Снято'}</button>
+      <button class="actbtn council" onclick="openCouncil('${section}',${i})">🎯 Консилиум</button>
+    </div>
+    <button class="ba" style="margin-top:8px" onclick="addVer('${section}',${i})">+ Версия</button>
+    </div></div>`;}).join('');
+  bindEdits();
+}
+function addVer(section,idx){const data=reelsData[section];openM('Новая версия',`<label>Метка</label><input id="mv" value="v${data[idx].versions.length+1}"><label>Текст</label><textarea id="mb" rows="9"></textarea>`,()=>{const v=document.getElementById('mv').value.trim(),body=document.getElementById('mb').value.trim();if(body){data[idx].versions.push({v,body});drawReels(section,data);}});}
+function addReel(section){const data=reelsData[section];openM('Новый сценарий',`<label>Хук</label><input id="mh"><label>Рубрика</label><input id="mr"><label>Кодовое слово</label><input id="mk"><label>Текст</label><textarea id="mb" rows="7"></textarea>`,()=>{const hook=document.getElementById('mh').value.trim(),rubric=document.getElementById('mr').value.trim(),kw=document.getElementById('mk').value.trim(),body=document.getElementById('mb').value.trim();if(hook){data.push({num:data.length+1,hook,rubric,pack:'',kw,versions:[{v:'v1',body}]});drawReels(section,data);}});}
+
+/* ==================== ЭТАП 1 ==================== */
+function renderE1Idea(){
+  document.getElementById('sec-e1_idea').innerHTML=
+  ehdr('e1','Этап 1 из 3','🔴 Корень зла','Школа не дала ребёнку алгоритм самостоятельной работы. Ребёнок зовёт маму — мама стала костылём. Здесь цепляем холодную аудиторию, вскрываем боль и снимаем вину: «Дело не в ребёнке».',['🎯 Подписка + лид-магнит','👥 Холодная','🔑 ФОКУС · РАЗБОР · СИГНАЛ'])
+  +`<div class="card"><div class="ct">🧩 Логика этапа</div><p><strong>Корень зла → лид-магнит.</strong> Контент «подглядывает» проблему и даёт быстрое облегчение.</p>
+  <table class="pt" style="margin-top:8px"><tr><th>Корень зла</th><th>Лид-магнит</th></tr>
+  <tr><td>Нет алгоритма. Мама = костыль.</td><td>Чек-лист «Как перестать делать уроки за ребёнка» (ФОКУС)</td></tr></table></div>
+  <div class="card"><div class="ct">🎁 Лид-магниты этапа 1</div><div id="e1leads"></div></div>`;
+  drawLeadsInto('e1leads',1);
+}
+function renderE1Reels(){renderReels('e1_reels',e1_reels,'sec-e1_reels',ehdr('e1','Этап 1 · Корень зла','🎬 Рилсы: вскрыть боль','Холодная аудитория. Попасть в боль за 3 секунды. Провокация — на охваты, диагностика боли — на сохранения.',['Тип: Reels','Пакеты: «Боль», «Диагностика», «Конверсия»']),'🎬','Сценарии Reels','вскрыть боль');}
+function renderE1Posts(){document.getElementById('sec-e1_posts').innerHTML=ehdr('e1','Этап 1 · Корень зла','📝 Посты «Зачем английский»','Не объяснять, а провоцировать и расколоть аудиторию. Реакция = комментарии = охваты.',['Тип: посты'])+`<div id="e1_posts-l"></div><button class="ba" onclick="addPost('e1_posts')">+ Добавить пост</button>`;drawPosts('e1_posts',e1_posts);}
+function renderE1Comments(){document.getElementById('sec-e1_comments').innerHTML=ehdr('e1','Этап 1 · Корень зла','💬 Комментарии (угон трафика)','30 в день под чужими постами. Ты не комментируешь — консультируешь. Главный бесплатный источник холодного трафика.',['30/день'])+`<div class="ft" id="commft"></div><div id="commlist"></div><button class="ba" onclick="addComm()">+ Добавить комментарий</button>`;
+  document.getElementById('commft').innerHTML=['all','боль','провокация','зачем'].map((t,i)=>`<div class="ftb ${i===0?'active':''}" onclick="fComm(this,'${t}')">${t==='all'?'Все':t==='зачем'?'Зачем английский':t[0].toUpperCase()+t.slice(1)}</div>`).join('');
+  drawComm('all');}
+function renderE1Hooks(){const cats=Object.keys(e1_hooks);document.getElementById('sec-e1_hooks').innerHTML=ehdr('e1','Этап 1 · Корень зла','⚡ Хуки боли и провокации','Первые 3 секунды рилса. Боль — для узнавания, провокация — для споров и охватов.',['2 категории'])+`<div id="hlist"></div><button class="ba" onclick="addHook()">+ Добавить хук</button>`;drawHooks();}
+
+/* ==================== ЭТАП 2 ==================== */
+function renderE2Idea(){
+  document.getElementById('sec-e2_idea').innerHTML=
+  ehdr('e2','Этап 2 из 3','🟢 Выгода','Подписчик зацеплен. Показываем выгоду по нарастающей: персонализация → усиление боли → трипваер → контраст с репетитором → соцдоказательство → оффер → дожим.',['🎯 Покупка','👥 Прогретая','🔑 ПРАВО · СТАРТ · ЗАМЕНА'])
+  +`<div class="card"><div class="ct">🪜 8 ступеней воронки</div>
+  <table class="pt"><tr><th>#</th><th>Ступень</th><th>Выгода</th></tr>
+  <tr><td>1</td><td>Вход в бота + «класс ребёнка?»</td><td>Персонализация</td></tr>
+  <tr><td>2</td><td>Усиление боли (мини-урок)</td><td>«Глубже, чем думала»</td></tr>
+  <tr class="hl"><td>3</td><td>Трипваер: 3 дня (ПРАВО)</td><td>Результат без риска</td></tr>
+  <tr><td>4</td><td>Контраст с репетитором</td><td>«Экономлю»</td></tr>
+  <tr><td>5</td><td>Соцдоказательство</td><td>«Другим помогло»</td></tr>
+  <tr class="hl"><td>6</td><td>Оффер с дедлайном</td><td>«Брать сейчас»</td></tr>
+  <tr><td>7</td><td>Последний шанс (FOMO)</td><td>Страх упустить</td></tr>
+  <tr><td>8</td><td>Мягкий дожим → канал</td><td>«Дозрею — куплю»</td></tr></table></div>
+  <div class="card"><div class="ct">🎁 Лид-магниты этапа 2</div><div id="e2leads"></div></div>`;
+  drawLeadsInto('e2leads',2);
+}
+function renderE2Reels(){renderReels('e2_reels',e2_reels,'sec-e2_reels',ehdr('e2','Этап 2 · Выгода','🎬 Рилсы: диагностика + решение','Спокойный эксперт ставит диагноз и показывает систему. Ступени 2–4 воронки.',['Тип: Reels','Пакеты: «Боль», «Диагностика», «Конверсия»']),'🎬','Сценарии Reels','диагностика · решение');}
+function renderE2Proof(){renderReels('e2_proof',e2_proof,'sec-e2_proof',ehdr('e2','Этап 2 · Выгода','📹 Рилсы: доказательства','Соцдоказательство и демонстрация продукта (ступень 5). Скринкасты, кейсы, отзывы.',['Тип: Reels','Пакет: «Доказательства»']),'📹','Сценарии Reels','кейсы · скринкасты');}
+function renderE2Conv(){renderReels('e2_conv',e2_conv,'sec-e2_conv',ehdr('e2','Этап 2 · Выгода','💰 Рилсы: конверсия','Прямой призыв в воронку: контраст цены и трипваер. Заканчиваются кодовым словом → бот.',['Цель: переход в бот']),'💰','Сценарии Reels','контраст · трипваер');}
+function renderE2Direct(){document.getElementById('sec-e2_direct').innerHTML=ehdr('e2','Этап 2 · Выгода','📩 Скрипты директа','Пришло кодовое слово — НЕ слать ссылку сразу. Сначала персонализация, потом разбор, потом доступ.',['Ступени 1–3 вручную'])+`<div id="dlist"></div><button class="ba" onclick="addDirect()">+ Добавить скрипт</button>`;drawDirect();}
+function renderE2Funnel(){document.getElementById('sec-e2_funnel').innerHTML=ehdr('e2','Этап 2 · Выгода','🤖 Бот + сторис','Автоматизация 8 ступеней с таймерами и дедлайном. Сторис — ручной прогрев по той же логике.',['Прогрев'])
+  +`<div class="card"><div class="ct">🤖 Бот (8 шагов)</div><p class="editable" data-edit="bot8">${ed('bot8','1. ВХОД — Боль + почему так происходит\n2. ПЕРВОЕ РЕШЕНИЕ — Бесплатный урок (лид-магнит)\n3. ДОЖИМ ЦЕННОСТИ — Бонусы (через 40 мин)\n4. ОФФЕР трипваера (через 1 мин), ограничение 1 час\n5. УСИЛЕНИЕ — Бонусы (через 2 мин)\n6. CTA + ПРИМЕР РЕЗУЛЬТАТА\n7. НАПОМИНАНИЕ №1 (через 30 мин)\n8. ПОСЛЕДНИЙ ШАНС (через 15 мин), FOMO. Не купил → в канал')}</p></div>
+  <div class="card"><div class="ct">📱 Сторис (8 шагов)</div><p class="editable" data-edit="stories8">${ed('stories8','1. БОЛЬ — «это про меня»\n2. УСИЛЕНИЕ — что будет если не менять\n3. НОВОЕ РЕШЕНИЕ\n4. ЦЕННОСТЬ ПОДХОДА\n5. ЭКСПЕРТНОСТЬ\n6. КЕЙСЫ (до/после)\n7. ВОЗРАЖЕНИЯ\n8. CTA + ЛИД-МАГНИТ')}</p></div>
+  <div class="card"><div class="ct">🎬 Структура конверсионного рилса (60 сек)</div><table class="pt">
+  <tr><th>Блок</th><th>Время</th></tr><tr><td>Хук — удар в боль</td><td>0–3с</td></tr><tr><td>Подхук — снять сопротивление</td><td>3–8с</td></tr><tr><td>Суть — самодиагностика</td><td>8–35с</td></tr><tr><td>Микро-инсайт (петля)</td><td>35–45с</td></tr><tr><td>CTA → бот</td><td>45–60с</td></tr></table></div>`;
+  bindEdits();
+}
+function renderE2Price(){document.getElementById('sec-e2_price').innerHTML=ehdr('e2','Этап 2 · Выгода','💳 Цены и возражения','Единственный источник актуальных цен — сверять сюда.',['Справка + скрипты'])
+  +`<div class="card"><div class="ct">💳 Тарифы</div><table class="pt"><tr><th>Тариф</th><th>Цена</th></tr>
+  <tr><td>Помесячная (1 класс)</td><td><strong>1 190 ₽/мес</strong></td></tr>
+  <tr class="hl"><td>🏆 Три класса (2–4)</td><td><strong style="color:var(--ok)">6 590 ₽</strong> ≈500/мес</td></tr>
+  <tr><td>На сайте</td><td><strong>9 500 ₽</strong></td></tr>
+  <tr><td>Пробный</td><td><strong style="color:var(--ok)">Бесплатно 3 дня</strong></td></tr></table></div>
+  <div class="card"><div class="ct">📢 Как подавать цену</div>
+  <p class="editable" data-edit="priceok1" style="background:var(--sand);border-radius:7px;padding:8px 11px;margin-bottom:6px">${ed('priceok1','✅ «Около 500 рублей в месяц — меньше похода в кино»')}</p>
+  <p style="background:#FEE;border-radius:7px;padding:8px 11px">❌ «Всего 6590 рублей!» — воспринимается как большая сумма</p></div>
+  <div class="subh">Отработка возражений</div><div id="objlist"></div><button class="ba" onclick="addObj()">+ Добавить возражение</button>
+  <div class="warn" style="margin-top:11px"><strong>⚠️ Не делать:</strong> Давить. Обесценивать репетитора. Обещать гарантированные пятёрки.</div>`;
+  bindEdits();drawObj();
+}
+
+/* ==================== ЭТАП 3 ==================== */
+function renderE3Idea(){
+  document.getElementById('sec-e3_idea').innerHTML=
+  ehdr('e3','Этап 3 из 3','🟣 Смыслы','Самый тонкий слой — ценности, которые болят: вина, страх за будущее, право быть просто мамой. Догреваем тех, кто не купил сразу, удерживаем купивших.',['🎯 Дожим + лояльность','🔑 НЕЗАВЕРШЕНО · ВОИН · МОЗГ'])
+  +`<div class="card"><div class="ct">💜 5 нервов и контент</div>
+  <table class="pt"><tr><th>Что грызёт</th><th>Контент</th></tr>
+  <tr><td>«Умные проигрывают болтунам»</td><td>Пост «Коллега с А2 получает проекты»</td></tr>
+  <tr><td>«Я плохая мать»</td><td>Пост «Мама не должна быть репетитором»</td></tr>
+  <tr><td>«Он не способный»</td><td>Reels про запрет слова «способности»</td></tr>
+  <tr><td>«Я не знаю английский»</td><td>Reels «Вам не нужно знать»</td></tr>
+  <tr><td>«Деньги впустую»</td><td>Reels про цену двух занятий</td></tr></table></div>
+  <div class="card"><div class="ct">🎁 Лид-магниты этапа 3</div><div id="e3leads"></div></div>`;
+  drawLeadsInto('e3leads',3);
+}
+function renderE3Reels(){renderReels('e3_reels',e3_reels,'sec-e3_reels',ehdr('e3','Этап 3 · Смыслы','🧬 Рилсы: наука о мозге','Структура: учёный → факт → применение → кодовое слово. Дают глубину и авторитет, объясняют ПОЧЕМУ.',['Пакет: «Наука о мозге» + личные']),'🧬','Сценарии Reels','наука · манифест');}
+function renderE3Posts(){document.getElementById('sec-e3_posts').innerHTML=ehdr('e3','Этап 3 · Смыслы','📌 Прогревающие посты','Закреплённые и смысловые тексты, формирующие доверие. Кто читает — уже в орбите.',['Тип: посты'])+`<div id="e3_posts-l"></div><button class="ba" onclick="addPost('e3_posts')">+ Добавить пост</button>`;drawPosts('e3_posts',e3_posts);}
+function renderE3Forum(){document.getElementById('sec-e3_forum').innerHTML=ehdr('e3','Этап 3 · Смыслы','🌐 Посты для форума','Тёплый тон, без кодовых слов, CTA — email в личку. 4 угла: вдохновение, решение, спор, страх.',['15 постов'])+`<div class="ft" id="forumft"></div><div id="forumlist"></div><button class="ba" onclick="addForumPost()">+ Добавить пост</button>`;
+  document.getElementById('forumft').innerHTML=['all','Вдохновение','Решение','Спор','Страх'].map((t,i)=>`<div class="ftb ${i===0?'active':''}" onclick="fForum(this,'${t}')">${t==='all'?'Все 15':t}</div>`).join('');
+  drawForum('all');}
+function renderE3Nlp(){document.getElementById('sec-e3_nlp').innerHTML=ehdr('e3','Этап 3 · Смыслы','🧠 НЛП-приёмы','10 техник, вшитых в смысловые посты. Особенно на дожиме.',['10 техник'])+nlpItems.map(n=>`<div class="card"><div class="ct">🧠 ${n.n}</div><p style="margin-bottom:6px">${n.d}</p><div style="background:var(--cream);border-radius:7px;padding:8px 10px;font-size:12.5px;color:var(--muted)"><em>${n.e}</em></div></div>`).join('');}
+
+/* ==================== ПОСТЫ / ФОРУМ / КОММЕНТ / ХУКИ / ЗАГОЛОВКИ ==================== */
+const postData={'e1_posts':e1_posts,'e3_posts':e3_posts};
+function drawPosts(section,data){
+  document.getElementById(section+'-l').innerHTML=data.map((p,i)=>{const id=uid(section,i);
+  return `<div class="item ${isDone(id)?'done':''}"><div class="ih" onclick="tItem(this)">
+  <div class="am"><div class="ak">${p.title}</div>${p.tag?`<div class="as">${p.tag}</div>`:''}</div>
+  <button class="hstar ${isFav(id)?'on':''}" onclick="event.stopPropagation();toggleFav('${id}');drawPosts('${section}',postData['${section}'])">${isFav(id)?'★':'☆'}</button>
+  <span class="arrow">▼</span></div>
+  <div class="ib"><div class="at editable" data-edit="${section}_b_${i}">${ed(section+'_b_'+i,p.body)}</div>
+  <div class="acts"><button class="actbtn copy" onclick="cpTxt(${JSON.stringify(p.body)})">📋 Копировать</button>
+  <button class="actbtn done ${isDone(id)?'on':''}" onclick="toggleDone('${id}');drawPosts('${section}',postData['${section}'])">${isDone(id)?'✓ Использовано':'Отметить'}</button></div></div></div>`;}).join('');
+  bindEdits();
+}
+function addPost(section){const data=postData[section];let extra=section==='e1_posts'?'<label>Тег</label><input id="mtag">':'';openM('Новый пост',`<label>Заголовок</label><input id="mtt">${extra}<label>Текст</label><textarea id="mb" rows="8"></textarea>`,()=>{const title=document.getElementById('mtt').value.trim(),body=document.getElementById('mb').value.trim();const tagEl=document.getElementById('mtag');const tag=tagEl?tagEl.value.trim():'';if(body){data.push(tag?{title,tag,body}:{title,body});drawPosts(section,data);}});}
+
+function drawForum(filter){
+  const data=filter==='all'?e3_forum:e3_forum.filter(p=>p.tag===filter);
+  document.getElementById('forumlist').innerHTML=data.map((p)=>{const i=e3_forum.indexOf(p);const id=uid('e3_forum',i);
+  return `<div class="item ${isDone(id)?'done':''}"><div class="ih" onclick="tItem(this)">
+  <span class="aw">${p.tag}</span><div class="am"><div class="ak">${p.title}</div></div>
+  <button class="hstar ${isFav(id)?'on':''}" onclick="event.stopPropagation();toggleFav('${id}');drawForum('${filter}')">${isFav(id)?'★':'☆'}</button>
+  <span class="arrow">▼</span></div>
+  <div class="ib"><div class="at editable" data-edit="e3_forum_b_${i}">${ed('e3_forum_b_'+i,p.body)}</div>
+  <div class="acts"><button class="actbtn copy" onclick="cpTxt(${JSON.stringify(p.body)})">📋 Копировать</button>
+  <button class="actbtn done ${isDone(id)?'on':''}" onclick="toggleDone('${id}');drawForum('${filter}')">${isDone(id)?'✓':'Отметить'}</button></div></div></div>`;}).join('');
+  bindEdits();
+}
+function fForum(el,f){document.querySelectorAll('#forumft .ftb').forEach(t=>t.classList.remove('active'));el.classList.add('active');drawForum(f);}
+function addForumPost(){openM('Новый пост',`<label>Угол</label><input id="mtag" placeholder="Вдохновение/Решение/Спор/Страх"><label>Название</label><input id="mtt"><label>Текст</label><textarea id="mb" rows="8"></textarea>`,()=>{const tag=document.getElementById('mtag').value.trim(),title=document.getElementById('mtt').value.trim(),body=document.getElementById('mb').value.trim();if(body){e3_forum.push({tag,title,body});drawForum('all');}});}
+
+function drawComm(filter){
+  const data=filter==='all'?e1_comments:e1_comments.filter(c=>c.tag===filter);
+  document.getElementById('commlist').innerHTML=data.map((c)=>{const i=e1_comments.indexOf(c);const id=uid('e1_comments',i);
+  return `<div class="item ${isDone(id)?'done':''}"><div class="ih" onclick="tItem(this)">
+  <div class="am"><div class="ak">${c.t}</div><div class="as"><em>${c.q}</em></div></div>
+  <button class="hstar ${isFav(id)?'on':''}" onclick="event.stopPropagation();toggleFav('${id}');drawComm('${filter}')">${isFav(id)?'★':'☆'}</button>
+  <span class="arrow">▼</span></div>
+  <div class="ib"><div class="at editable" data-edit="e1_comments_c_${i}">${ed('e1_comments_c_'+i,c.c)}</div>
+  <div class="acts"><button class="actbtn copy" onclick="cpTxt(${JSON.stringify(c.c)})">📋 Копировать</button></div></div></div>`;}).join('');
+  bindEdits();
+}
+function fComm(el,f){document.querySelectorAll('#commft .ftb').forEach(t=>t.classList.remove('active'));el.classList.add('active');drawComm(f);}
+function addComm(){openM('Новый комментарий',`<label>Название</label><input id="mt"><label>Тег</label><input id="mtag"><label>Ситуация</label><input id="mq"><label>Текст</label><textarea id="mc" rows="5"></textarea>`,()=>{const t=document.getElementById('mt').value.trim(),tag=document.getElementById('mtag').value.trim(),q=document.getElementById('mq').value.trim(),c=document.getElementById('mc').value.trim();if(c){e1_comments.push({t,tag,q,c});drawComm('all');}});}
+
+function drawHooks(){
+  const cats=Object.keys(e1_hooks);let html='';
+  cats.forEach((c,ci)=>{
+    html+=`<div class="tblock">${tbh('','',c,e1_hooks[c].length+' шт.')}`;
+    e1_hooks[c].forEach((h,hi)=>{const id=uid('e1_hooks',ci+'.'+hi);
+      html+=`<div class="hi ${isDone(id)?'done':''}"><span class="ht editable" data-edit="hook_${ci}_${hi}">${ed('hook_'+ci+'_'+hi,h)}</span>
+      <button class="hstar ${isFav(id)?'on':''}" onclick="toggleFav('${id}');drawHooks()">${isFav(id)?'★':'☆'}</button>
+      <button class="hcp" onclick="cpTxt(${JSON.stringify(h)})">📋</button>
+      <button class="bd" onclick="e1_hooks[Object.keys(e1_hooks)[${ci}]].splice(${hi},1);drawHooks()">✕</button></div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('hlist').innerHTML=html;bindEdits();
+}
+function addHook(){const cats=Object.keys(e1_hooks);openM('Новый хук',`<label>Категория</label><select id="mc">${cats.map((c,i)=>`<option value="${i}">${c}</option>`).join('')}</select><label>Текст</label><textarea id="mh" rows="3"></textarea>`,()=>{const ci=+document.getElementById('mc').value,t=document.getElementById('mh').value.trim();if(t){e1_hooks[cats[ci]].push(t);drawHooks();}});}
+
+function drawHeads(){
+  const tags=[...new Set(headlines.map(h=>h.tag))];let html='';
+  tags.forEach(tag=>{
+    html+=`<div class="tblock">${tbh('','',tag,headlines.filter(h=>h.tag===tag).length+' шт.')}`;
+    headlines.forEach((h,i)=>{if(h.tag!==tag)return;const id=uid('x_heads',i);
+      html+=`<div class="hi ${isDone(id)?'done':''}"><span class="ht editable" data-edit="head_${i}">${ed('head_'+i,h.h)}</span>
+      <button class="hstar ${isFav(id)?'on':''}" onclick="toggleFav('${id}');drawHeads()">${isFav(id)?'★':'☆'}</button>
+      <button class="hcp" onclick="cpTxt(${JSON.stringify(h.h)})">📋</button>
+      <button class="bd" onclick="headlines.splice(${i},1);drawHeads()">✕</button></div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('headlist').innerHTML=html;bindEdits();
+}
+function addHead(){openM('Новый заголовок',`<label>Тег</label><input id="mt"><label>Заголовок</label><textarea id="mh" rows="3"></textarea>`,()=>{const tag=document.getElementById('mt').value.trim(),h=document.getElementById('mh').value.trim();if(h){headlines.push({tag,h});drawHeads();}});}
+
+/* ==================== ВОЗРАЖЕНИЯ / СКРИПТЫ / ЛИДЫ ==================== */
+function drawObj(){document.getElementById('objlist').innerHTML=objections.map((o,i)=>`<div class="item"><div class="ih" onclick="tItem(this)"><div class="am"><div class="ak">${o.q}</div></div><button class="bd" onclick="event.stopPropagation();objections.splice(${i},1);drawObj()">✕</button><span class="arrow">▼</span></div><div class="ib"><div class="at editable" data-edit="obj_${i}">${ed('obj_'+i,o.a)}</div><div class="acts"><button class="actbtn copy" onclick="cpTxt(${JSON.stringify(o.a)})">📋 Копировать</button></div></div></div>`).join('');bindEdits();}
+function addObj(){openM('Новое возражение',`<label>Возражение</label><input id="mq"><label>Ответ</label><textarea id="ma" rows="4"></textarea>`,()=>{const q=document.getElementById('mq').value.trim(),a=document.getElementById('ma').value.trim();if(q){objections.push({q,a});drawObj();}});}
+
+function drawDirect(){document.getElementById('dlist').innerHTML=directs.map((d,i)=>`<div class="item"><div class="ih" onclick="tItem(this)"><div class="am"><div class="ak">📩 ${d.t}</div></div><button class="bd" onclick="event.stopPropagation();directs.splice(${i},1);drawDirect()">✕</button><span class="arrow">▼</span></div><div class="ib"><div class="at editable" data-edit="dir_${i}">${ed('dir_'+i,d.body)}</div><div class="acts"><button class="actbtn copy" onclick="cpTxt(${JSON.stringify(d.body)})">📋 Копировать</button></div></div></div>`).join('');bindEdits();}
+function addDirect(){openM('Новый скрипт',`<label>Название</label><input id="mt"><label>Текст</label><textarea id="mb" rows="7"></textarea>`,()=>{const t=document.getElementById('mt').value.trim(),body=document.getElementById('mb').value.trim();if(body){directs.push({t,body});drawDirect();}});}
+
+function drawLeadsInto(cid,stage){const data=leadmags.filter(l=>l.e===stage);document.getElementById(cid).innerHTML=data.length?data.map(l=>`<div style="background:var(--cream);border-radius:9px;padding:10px 12px;margin-bottom:7px"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><strong style="font-size:13px;color:var(--navy)">🎁 ${l.name}</strong><span class="aw">${l.kw}</span></div><p style="font-size:12.5px;margin:4px 0">${l.desc}</p><p style="color:var(--ok);font-size:12px">→ <strong>${l.res}</strong></p></div>`).join(''):'<p style="font-size:13px;color:var(--muted)">Нет лид-магнитов для этапа.</p>';}
+
+/* ==================== СКВОЗНЫЕ ==================== */
+function renderXPersona(){document.getElementById('sec-x_persona').innerHTML=`<div class="st">🎭 Персонаж «Афина»</div><div class="ss">Один человек — два регистра. Ядро не меняется, меняется дистанция.</div>
+  <div class="card" style="border-left:3px solid var(--acc)"><div class="ct">🧭 Главный принцип</div><p style="font-weight:500">Меняется обёртка — не меняется вещество.</p><p style="margin-top:5px">Кэжуал — это про одежду, локацию, темп, лексику. Их расслабляем сколько угодно. Экспертность — это про <em>что</em> ты говоришь и <em>как</em> думаешь. Её не трогаем никогда. Клоун снижает содержание. Ты снижаешь только дистанцию — это безопасно.</p></div>
+
+  <div class="subh">🎩 Регистр 1 — «Афина парадная» (школа, официальное)</div>
+  <div class="card"><div class="ct">🎭 Архетип</div><p class="editable" data-edit="persona_arch">${ed('persona_arch','Не весёлая учительница. Не коуч. Специалист, который видит систему там, где другие видят хаос. Паузы. Взгляд. Спокойствие.')}</p></div>
+  <div class="card"><div class="ct">🎨 Визуальный код</div><p><strong>Одежда:</strong> шёлковые блузки, jewel tones, жакеты. Без яркого принта.</p><p style="margin-top:5px"><strong>Фон:</strong> книжный шкаф, рабочий стол. <strong>Где:</strong> школа, официальные материалы, лендинг.</p></div>
+
+  <div class="subh" style="color:var(--e2)">🏡 Регистр 2 — «Афина дома» (Reels, разговорная голова)</div>
+  <div class="card" style="border:1px solid var(--e2);border-radius:12px"><div class="ct" style="color:var(--e2)">🏡 Кто это</div><p class="editable" data-edit="home_who">${ed('home_who','Та же Татьяна, что и в школе, но пришедшая домой. Сняла жакет, налила чай, села в своё крутящееся кресло у подоконника и рассказывает подруге-маме то, что знает про школьный английский. Не с трибуны — а будто через стол на кухне. Она пришла с работы или отдыхает в выходной и делится полезным для мам.')}</p></div>
+  <div class="card"><div class="ct">✅ Что остаётся от Афины (ядро — не трогать)</div><p class="editable" data-edit="home_core">${ed('home_core','• Ясность и структура мысли: «сначала слышим, потом говорим»\n• Спокойствие, паузы, никакой истерики и суеты\n• Позиция «я знаю систему» — не советует робко, а делится тем, в чём разбирается\n• Честность: продукт дешёвый и ценный. Никаких «миллионов» и дорогих обещаний')}</p></div>
+  <div class="card"><div class="ct">➕ Что добавляется дома</div><p class="editable" data-edit="home_add">${ed('home_add','• Локация: дом, подоконник, дневной свет, живой быт на фоне (не бардак, но и не студия)\n• Одежда: мягкая рубашка Colin\'s, джинсы, футболка «Калифорния» — чистое, простое, «я в этом реально хожу»\n• Лексика: разговорная — «слушайте», «знаете, что я поняла», «давайте честно»\n• Темп: живее школьного, с интонацией, можно улыбнуться и закатить глаза на абсурд системы\n• Роль: не учитель у доски, а своя среди мам — «я тоже дома, я тоже это вижу»')}</p></div>
+  <div class="card"><div class="ct">👗 Гардероб «Афина дома» — можно / нельзя</div>
+  <table class="pt"><tr><th>✅ Это я дома</th><th>❌ Уже неряшливость</th></tr>
+  <tr><td>Мягкая хлопковая рубашка (Colin\'s), однотонная</td><td>Растянутая майка, застиранное</td></tr>
+  <tr><td>Чистая футболка с принтом «Калифорния»</td><td>Пятна, катышки, мятое</td></tr>
+  <tr><td>Джинсы, простой трикотаж, уютный кардиган</td><td>Пижама, домашний халат</td></tr>
+  <tr><td>Волосы прибраны, лёгкий макияж или без</td><td>«Только проснулась», неопрятность</td></tr></table>
+  <p style="margin-top:7px;font-size:12.5px;color:var(--muted)">Правило: «простое и чистое» — да. «Мне всё равно, как я выгляжу» — нет. Небрежность одежды при точности мысли усиливает доверие. Неопрятность — разрушает.</p></div>
+  <div class="card"><div class="ct">🎤 Речь дома</div><p>Те же паузы и ясность, но теплее и проще. Начинай как разговор: «Слушайте, вот что я заметила за 16 лет…», «Знаете, почему это происходит? Сейчас объясню по-человечески».</p><p style="margin-top:6px"><span class="tag tg">по-честному</span><span class="tag tg">по-человечески</span><span class="tag tg">я тоже мама</span><span class="tag tg">давайте разберёмся</span><span class="tag tb">система</span><span class="tag tb">без боли</span></p></div>
+
+  <div class="card"><div class="ct">📱 Шапка Instagram</div><p class="editable" data-edit="bio" style="background:var(--cream);border-radius:8px;padding:10px 12px;line-height:1.8">${ed('bio','Татьяна Владимировна | Английский без боли\nШкольный английский по Spotlight без слёз и репетитора.\nРебёнок делает домашку сам. Встроено в полчаса.\nТренажёр 2–4 класс | Летний курс\n📩 Кодовое слово СТАРТ → пробный доступ')}</p><button class="actbtn copy" style="flex:none;margin-top:8px" onclick="cpTxt(document.querySelector('[data-edit=bio]').innerText)">📋 Копировать</button></div>`;bindEdits();}
+function renderXTone(){document.getElementById('sec-x_tone').innerHTML=`<div class="st">💬 Тон, стиль, съёмка</div><div class="ss">Домашний регистр «Афина дома»: тепло по форме, точно по сути.</div>
+  <div class="card"><div class="ct">✅ Наш стиль — школьный (экспертный)</div><div class="editable" data-edit="tone_ok" style="background:var(--sand);border-left:3px solid var(--navy);border-radius:0 8px 8px 0;padding:10px 12px;line-height:1.7">${ed('tone_ok','Если ребёнок учит слова весь вечер, а в пятницу двойка — это не его вина. Авторы Spotlight заложили семь этапов работы с лексикой. В школе остаётся один — диктант. Я возвращаю остальные шесть.')}</div></div>
+  <div class="card" style="border-left:3px solid var(--e2)"><div class="ct" style="color:var(--e2)">✅ Наш стиль — домашний (Reels у подоконника)</div><div class="editable" data-edit="tone_home" style="background:var(--e2bg);border-left:3px solid var(--e2);border-radius:0 8px 8px 0;padding:10px 12px;line-height:1.7">${ed('tone_home','Слушайте, честно. Ваш ребёнок учит слова весь вечер, а в пятницу — двойка. И вы думаете: ну что такое, мы же сидели. А знаете, в чём дело? Мозг не запоминает слово с одной встречи. Просто не умеет. В учебнике заложено семь подходов к слову — а в школе доходит до одного, до диктанта. Я в своей системе возвращаю остальные шесть. Всё.')}</div><p style="margin-top:7px;font-size:12.5px;color:var(--muted)">То же содержание, что слева — но подано как разговор с подругой. Разговорный заход, «по-честному», живая интонация. Мысль — та же, экспертная.</p></div>
+  <div class="card"><div class="ct">❌ Не наш стиль — две ошибки</div>
+  <p style="font-size:12px;font-weight:600;color:#5a2020;margin-bottom:4px">Ошибка 1 — клоун (упало содержание):</p>
+  <div style="background:#FEE;border-left:3px solid #E44;border-radius:0 8px 8px 0;padding:9px 11px;color:#5a2020;margin-bottom:9px">«МАМОЧКИ! Ваш ребёнок ничего не знает?? КАТАСТРОФА! 🔥🔥 Со мной за месяц заговорит!!!»</div>
+  <p style="font-size:12px;font-weight:600;color:#5a2020;margin-bottom:4px">Ошибка 2 — неряшливость (упала форма):</p>
+  <div style="background:#FEE;border-left:3px solid #E44;border-radius:0 8px 8px 0;padding:9px 11px;color:#5a2020">Растянутая майка, «только проснулась», бардак на фоне, мямлит без структуры. Дом ≠ распущенность.</div></div>
+  <div class="card"><div class="ct">🤝 «Диалог с мамой» (против косноязычия)</div><p class="editable" data-edit="dialog">${ed('dialog','Мама за кадром задаёт вопрос — ты отвечаешь ей, не камере. Включаются эмоции.\n1. «Боюсь, если не контролирую — развалится» → система vs контроль → ФОКУС\n2. «Учит, но не помнит» → зубрёжка vs система → ИГРА\n3. «Я сама не знаю английский» → «Вам не нужно знать» → ПОДДЕРЖКА')}</p></div>
+  <div class="card" style="border-left:3px solid var(--e2)"><div class="ct" style="color:var(--e2)">🏡 Съёмка дома на телефон (подоконник)</div><p class="editable" data-edit="tech_home">${ed('tech_home','• Свет: сядь ЛИЦОМ к окну — дневной свет из окна лучший бесплатный софтбокс. Никогда спиной к окну (будешь силуэтом).\n• Съёмка днём, у подоконника. В пасмурно — добавь настольную лампу сбоку-спереди, не сверху.\n• Телефон на уровне глаз или чуть выше, не снизу. Штатив или стопка книг. Не в руке — трясётся.\n• Дистанция: телефон в 40–60 см, лицо занимает верхнюю треть кадра, видно плечи.\n• Фон: подоконник, растение, часть комнаты. Прибрано, но живо. Не пустая стена, не бардак.\n• Смотри в ОБЪЕКТИВ (точка сверху), не на своё лицо на экране — иначе взгляд «мимо».\n• Звук: телефон близко ИЛИ петличка за 500–800 ₽. Плохой звук убивает даже отличный текст.')}</p></div>
+  <div class="card"><div class="ct">🎬 Обработка (CapCut)</div><p class="editable" data-edit="tech">${ed('tech','• Лёгкая цветокоррекция: Temp +5, Contrast -10, Highlights -20, Shadows +15\n• Крупные субтитры (многие смотрят без звука)\n• Обрезать паузы и «эээ», но не частить — темп живой, не рваный\n• Без агрессивных переходов и мемных зумов — это Афина, не тикток-школьник')}</p></div>
+  <div class="card"><div class="ct">🎯 Пропорция</div><p><span class="tag to">60% Провокация</span><span class="tag tb">30% Боль</span><span class="tag ts">10% Экспертность</span></p></div>`;bindEdits();}
+function renderXPos(){document.getElementById('sec-x_pos').innerHTML=`<div class="st">🎯 Позиционирование</div><div class="ss">Кто мы, чем отличаемся.</div>
+  <div class="card"><div class="ct">🎯 Главная фраза</div><p class="editable" data-edit="mainphrase2" style="font-size:16px;font-weight:700;color:var(--navy)">${ed('mainphrase2','Ребёнок делает школьный Spotlight сам. Без репетитора. Без мамы.')}</p></div>
+  <div class="card"><div class="ct">✅ Отличия</div><table class="pt"><tr><th>Мы</th><th>Конкуренты</th></tr>
+  <tr><td>Строго по Spotlight</td><td>«Общий английский»</td></tr>
+  <tr><td>Ребёнок сам</td><td>Нужна мама/репетитор</td></tr>
+  <tr><td>~500 ₽/мес</td><td>5–8 тыс/мес</td></tr>
+  <tr><td>В домашку (полчаса)</td><td>+4 часа/нед</td></tr></table></div>
+  <div class="warn"><strong>❌ Нельзя:</strong> «Одобрено Минобром», «гарантируем пятёрки»<br><strong>✅ Можно:</strong> «Лицензированная программа доп. образования»</div>`;bindEdits();}
+function renderXAud(){document.getElementById('sec-x_aud').innerHTML=`<div class="st">👩 Аудитория и боли</div><div class="ss">6 слоёв боли мамы. Сегмент «Мама-репетитор».</div>
+  <div class="card"><div class="ct">👩 Портрет</div><p><span class="tag tb">28–45 лет</span><span class="tag tb">2–4 класс Spotlight</span><span class="tag tb">Домашка 2+ часа</span></p></div>
+  <div class="card"><div class="ct">💔 6 слоёв боли</div>${pains.map((p,i)=>`<div style="padding:8px 0;${i<pains.length-1?'border-bottom:1px solid var(--border)':''}"><strong style="font-size:13px;color:var(--navy)">${p.t}</strong><p style="margin-top:2px;font-size:13px">${p.d}</p></div>`).join('')}</div>
+  <div class="card"><div class="ct">🎁 Что продаём на самом деле</div><p><span class="tag tg">Тихий вечер</span><span class="tag tg">Право не быть педагогом</span><span class="tag tg">«Я сам!»</span><span class="tag tg">Снятие вины</span></p></div>`;}
+function renderXKw(){document.getElementById('sec-x_kw').innerHTML=`<div class="st">🔑 Кодовые слова</div><div class="ss">Тапни — скопируется. Цветная точка = этап.</div>
+  <div class="ft" id="kwft"></div><div class="kg" id="kwlist"></div><button class="ba" onclick="addKw()" style="margin-top:10px">+ Добавить</button>`;
+  document.getElementById('kwft').innerHTML=[[0,'Все'],[1,'🔴 Этап 1'],[2,'🟢 Этап 2'],[3,'🟣 Этап 3']].map(([f,l],i)=>`<div class="ftb ${i===0?'active':''}" onclick="fKw(this,${f})">${l}</div>`).join('');
+  drawKw(0);}
+function drawKw(filter){const dc={1:'#E84C88',2:'#7AC943',3:'#C724F0'};const data=keywords.map((k,idx)=>({k,idx})).filter(x=>filter===0||x.k.e===filter);document.getElementById('kwlist').innerHTML=data.map(({k})=>`<div class="kc" onclick="cpTxt('${k.w}')"><div class="kw">${k.w} <span style="width:8px;height:8px;border-radius:2px;background:${dc[k.e]||'#ccc'};display:inline-block"></span></div><div class="kd">${k.d}</div></div>`).join('');}
+function fKw(el,f){document.querySelectorAll('#kwft .ftb').forEach(t=>t.classList.remove('active'));el.classList.add('active');drawKw(f);}
+function addKw(){openM('Новое слово',`<label>Слово</label><input id="mw"><label>Описание</label><input id="mdesc"><label>Этап 1/2/3</label><input id="me" value="2">`,()=>{const w=document.getElementById('mw').value.trim(),d=document.getElementById('mdesc').value.trim(),e=+document.getElementById('me').value||2;if(w){keywords.push({w,d,e});drawKw(0);}});}
+function renderXHeads(){document.getElementById('sec-x_heads').innerHTML=`<div class="st">📰 50 заголовков ИСВП</div><div class="ss">Интрига · срочность · выгода · причастность.</div><div id="headlist"></div><button class="ba" onclick="addHead()">+ Добавить</button>`;drawHeads();}
+function renderXPlan(){document.getElementById('sec-x_plan').innerHTML=`<div class="st">📅 План + стратегия</div><div class="ss">Цель первых 30 дней — не 40 000 подписчиков, а 10 оплат.</div>
+  <div class="subh">15-дневный план «4 угла»</div>
+  ${plan15.map(p=>`<div class="card" style="padding:11px 13px"><div style="display:flex;align-items:center;gap:9px"><strong style="font-size:16px;color:var(--navy)">${p.day}</strong><span style="background:${p.col};padding:2px 8px;border-radius:20px;font-size:11px">${p.angle}</span><span style="margin-left:auto;font-size:11px;font-weight:700;color:var(--navy)">${p.kw}</span></div><p style="margin-top:5px;font-size:13.5px">${p.theme}</p></div>`).join('')}
+  <div class="subh">90-дневная стратегия</div>
+  <div class="card"><table class="pt"><tr><th>Месяц</th><th>Задача</th></tr><tr><td>1 — Фундамент</td><td>3 рилса/день, 30 комментов</td></tr><tr><td>2 — Лиды</td><td>Диагностика в директ, UGC</td></tr><tr><td>3 — Масштаб</td><td>Агентская сеть, эфиры</td></tr></table></div>
+  <div class="card"><div class="ct">📈 Результат</div><p>60–90 роликов + комментарии → <strong>10k за 1–3 месяца</strong></p></div>`;}
+function renderXAgents(){document.getElementById('sec-x_agents').innerHTML=`<div class="st">🤝 Агентская модель</div><div class="ss">Главный органический канал. Один представитель на класс. 10%.</div>
+  <div class="card"><div class="ct">💡 Суть</div><p class="editable" data-edit="agents">${ed('agents','Активная мама из класса = представитель Лангуста. Мамы доверяют мамам.')}</p><p style="margin-top:5px"><span class="tag tg">✅ Приоритетный канал</span></p></div>
+  <div class="card"><div class="ct">🎁 Агент получает</div><p class="editable" data-edit="agentget">${ed('agentget','• 10% с каждой оплаты по промокоду\n• Бесплатный доступ своему ребёнку\n• Готовые тексты для чата класса\n• Без обязательств')}</p></div>
+  <div class="card"><div class="ct">📱 Текст для чата класса</div><p class="editable" data-edit="chattext" style="background:var(--cream);border-radius:8px;padding:10px 12px;line-height:1.7">${ed('chattext','Привет всем! Хочу поделиться — наш ребёнок стал делать домашку по английскому сам, без моей помощи. Пользуемся тренажёром Лангуст. Есть цена для нашего класса + 3 дня бесплатно. Кому интересно — в личку.')}</p><button class="actbtn copy" style="flex:none;margin-top:8px" onclick="cpTxt(document.querySelector('[data-edit=chattext]').innerText)">📋 Копировать</button></div>`;bindEdits();}
+function renderRMethod(){document.getElementById('sec-r_method').innerHTML=`<div class="st">📚 Методика 918 часов</div><div class="ss">«918 уроков — и тишина»</div>
+  <div class="card"><div class="ct">📊 По ФГОС</div><table class="pt"><tr><th>Период</th><th>Итого</th></tr><tr><td>2–4 классы (2ч/нед)</td><td>204</td></tr><tr><td>5–11 (3ч/нед)</td><td>714</td></tr><tr class="hl"><td>Всего академ.</td><td>918 ч</td></tr><tr class="hl"><td>С домашкой</td><td>≈1122 ч</td></tr></table></div>
+  <div class="card"><div class="ct">📈 Должно давать C1–C2, реальность A2</div><p class="editable" data-edit="method_why">${ed('method_why','• Говорение — 2–3 мин из 45\n• 30% времени — дисциплина\n• Пропущены этапы введения\n• Домашка без системы = КПД ноль')}</p></div>
+  <div class="card"><div class="ct">📚 Правильная последовательность</div><p class="editable" data-edit="method_seq">${ed('method_seq','1️⃣ Устное введение\n2️⃣ Проговаривание\n3️⃣ Chit-Chat\n4️⃣ Let\'s Play!\n5️⃣ Визуальный образ\n6️⃣ Домашка\n\nВ школе: «К пятнице выучите 10 слов» (этапы 1–5 пропущены)')}</p></div>`;bindEdits();}
+function renderRLegal(){document.getElementById('sec-r_legal').innerHTML=`<div class="st">⚖️ Юридическое</div><div class="ss">Риски и зафиксированные ошибки</div>
+  <div class="card"><div class="ct">📄 Реквизиты ИП</div><p><strong>Скробова Татьяна Владимировна</strong></p><p>ОГРНИП: 325665800252077 · ИНН: 660310733115</p><p>Лицензия № Л035-01277-66/03819012 от 12.03.2024</p><p>langust.online</p></div>
+  <div class="warn"><strong>⚠️ КРИТИЧНО</strong>Нельзя «Одобрено Минобром». Можно «Лицензированная программа доп. образования».</div>
+  <div class="card"><div class="ct">📚 Права Spotlight</div><p class="editable" data-edit="legal_sp">${ed('legal_sp','• Доступ только ученикам\n• Не распространять копии учебников\n• Не заявлять партнёрство с «Просвещением»')}</p></div>`;bindEdits();}
+
+/* ==================== НАВИГАЦИЯ ==================== */
+const rendered={};
+const renderMap={today:renderToday,fav:renderFav,search:renderSearch,home:renderHome,matrix:renderMatrix,howto:renderHowto,
+  e1_idea:renderE1Idea,e1_reels:renderE1Reels,e1_posts:renderE1Posts,e1_comments:renderE1Comments,e1_hooks:renderE1Hooks,
+  e2_idea:renderE2Idea,e2_reels:renderE2Reels,e2_proof:renderE2Proof,e2_conv:renderE2Conv,e2_direct:renderE2Direct,e2_funnel:renderE2Funnel,e2_price:renderE2Price,
+  e3_idea:renderE3Idea,e3_reels:renderE3Reels,e3_posts:renderE3Posts,e3_forum:renderE3Forum,e3_nlp:renderE3Nlp,
+  x_persona:renderXPersona,x_tone:renderXTone,x_pos:renderXPos,x_aud:renderXAud,x_kw:renderXKw,x_heads:renderXHeads,x_plan:renderXPlan,x_agents:renderXAgents,
+  r_method:renderRMethod,r_legal:renderRLegal,r_data:renderData};
+/* секции, которые надо перерисовывать каждый раз (динамика) */
+const alwaysRender={today:1,fav:1,search:1,home:1,matrix:1,r_data:1};
+
+function ensureSec(id){
+  let sec=document.getElementById('sec-'+id);
+  if(!sec){sec=document.createElement('div');sec.className='sec';sec.id='sec-'+id;document.getElementById('main').appendChild(sec);}
+  return sec;
+}
+function go(id,el){
+  const sec=ensureSec(id);
+  if(renderMap[id] && (!rendered[id]||alwaysRender[id])){renderMap[id]();rendered[id]=true;}
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.drawer .ni').forEach(n=>n.classList.remove('active'));
+  sec.classList.add('active');
+  if(el)el.classList.add('active');
+  else document.querySelectorAll('.drawer .ni').forEach(n=>{const oc=n.getAttribute('onclick');if(oc&&oc.includes("'"+id+"'"))n.classList.add('active');});
+  applyEdit();
+  closeDrawer();
+  window.scrollTo(0,0);
+}
+function setTab(id){document.querySelectorAll('.tabbar button').forEach(b=>b.classList.remove('active'));const t=document.getElementById('tab-'+id);if(t)t.classList.add('active');}
+
+/* ==================== UI ХЕЛПЕРЫ ==================== */
+function tItem(el){el.parentElement.classList.toggle('open');}
+function openDrawer(){document.getElementById('drawer').classList.add('show');document.getElementById('scrim').classList.add('show');}
+function closeDrawer(){document.getElementById('drawer').classList.remove('show');document.getElementById('scrim').classList.remove('show');}
+function cpTxt(t,msg){navigator.clipboard.writeText(t).then(()=>toast(msg||'Скопировано!')).catch(()=>toast('Не удалось скопировать'));}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove('show'),1900);}
+function openM(title,body,cb){document.getElementById('mtitle').textContent=title;document.getElementById('mbody').innerHTML=body;mCb=cb;document.querySelector('#modal .mdb').innerHTML='<button class="bs" onclick="closeM()">Отмена</button><button class="bp" onclick="saveM()">Сохранить</button>';document.getElementById('modal').classList.add('show');setTimeout(()=>{const f=document.querySelector('#modal input,#modal textarea');if(f)f.focus();},90);}
+function closeM(){document.getElementById('modal').classList.remove('show');mCb=null;}
+function saveM(){if(mCb)mCb();closeM();}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeM();});
+let mCb=null,editMode=false;
+function toggleEdit(){editMode=!editMode;const b=document.getElementById('editbtn');b.classList.toggle('on',editMode);b.textContent=editMode?'💾':'✏️';document.body.classList.toggle('em',editMode);applyEdit();toast(editMode?'Правь текст пальцем':'Правки сохранены');}
+function applyEdit(){document.querySelectorAll('.editable').forEach(el=>{el.contentEditable=editMode?'true':'false';});}
+
+
+/* ==================== МАСТЕР «КОНСИЛИУМ» (Путь 2) ==================== */
+let COUNCIL={section:null,i:null,step:0,ans:{}};
+const councilSteps=[
+  {key:'goal',stage:'Шаг 1 из 5 · Задача',q:'Что не так с текущим рилсом? Что хочешь получить?',hint:'Выбери главную задачу для консилиума.',opts:[
+    {v:'weak_hook',t:'Слабый хук — не цепляет в первые секунды'},
+    {v:'boring',t:'Скучно, нет эмоции и энергии'},
+    {v:'unclear',t:'Непонятно, размыто — мысль плывёт'},
+    {v:'no_cta',t:'Слабый финал / призыв, не ведёт в бот'},
+    {v:'rewrite',t:'Полностью переписать под ту же тему'},
+    {v:'variants',t:'Всё ок, но нужны свежие варианты на выбор'},
+  ]},
+  {key:'pain',stage:'Шаг 2 из 5 · Боль',q:'В какую боль мамы бьём?',hint:'Это ядро сообщения — специалисты будут держать его в фокусе.',opts:[
+    {v:'kostyl',t:'Мама стала костылём — сидит над домашкой'},
+    {v:'sleza',t:'Домашка до слёз, скандалы по вечерам'},
+    {v:'zabyl',t:'Учит слова — забывает через день'},
+    {v:'nesposob',t:'«Он не способный» — ярлык от учителя'},
+    {v:'dengi',t:'Деньги на репетитора уходят впустую'},
+    {v:'gdz',t:'Списывает с ГДЗ, имитация учёбы'},
+  ]},
+  {key:'emotion',stage:'Шаг 3 из 5 · Эмоция',q:'С каким чувством мама должна досмотреть?',hint:'Задаёт тон всему сценарию.',opts:[
+    {v:'uznavanie',t:'Узнавание: «это же про нас»'},
+    {v:'oblegchenie',t:'Облегчение: «оказывается, я не виновата»'},
+    {v:'nadezhda',t:'Надежда: «значит, можно иначе»'},
+    {v:'provokacia',t:'Провокация: задеть, вызвать спор'},
+    {v:'doverie',t:'Доверие к эксперту: «она знает систему»'},
+  ]},
+  {key:'format',stage:'Шаг 4 из 5 · Формат',q:'В каком формате снимаешь?',hint:'Специалисты подстроят структуру под съёмку.',opts:[
+    {v:'talking',t:'Говорящая голова (я в кадре)'},
+    {v:'dialog',t:'Диалог с мамой за кадром (против косноязычия)'},
+    {v:'screencast',t:'Скринкаст тренажёра / экрана'},
+    {v:'text',t:'Текстовый рилс (текст на видео)'},
+  ]},
+  {key:'source',stage:'Шаг 5 из 5 · Полный текст',q:'Откуда берём полный текст рилса?',hint:'Сейчас в базе только наброски. Консилиум даст полный дикторский текст — слово в слово, живой, не схематичный.',opts:[
+    {v:'scratch',t:'Написать с нуля — живой полный текст под мою речь'},
+    {v:'draft',t:'Я надиктую свой черновик — консилиум доведёт'},
+  ],hasInput:true},
+];
+
+function openCouncil(section,i){
+  COUNCIL={section,i,step:0,ans:{}};
+  renderCouncilStep();
+  document.getElementById('modal').classList.add('show');
+}
+function renderCouncilStep(){
+  const total=councilSteps.length;
+  if(COUNCIL.step<total){
+    const s=councilSteps[COUNCIL.step];
+    const cur=COUNCIL.ans[s.key];
+    document.getElementById('mtitle').textContent='🎯 Консилиум';
+    const showInput = s.hasInput && cur==='draft';
+    document.getElementById('mbody').innerHTML=`<div class="cwrap">
+      <div class="cprog">${councilSteps.map((_,idx)=>`<span class="cp ${idx<=COUNCIL.step?'on':''}"></span>`).join('')}<span class="cp ${COUNCIL.step>=total?'on':''}"></span></div>
+      <div class="cstage">${s.stage}</div>
+      <div class="cstep"><div class="cq">${s.q}</div><div class="cqhint">${s.hint}</div>
+      <div class="copts">${s.opts.map(o=>{
+        const usedMark = (s.key==='emotion' && COUNCIL.section!=null && mHas(uid(COUNCIL.section,COUNCIL.i),'emotion',o.v)) ? '<span style="margin-left:auto;font-size:10px;color:var(--ok);font-weight:700">✓ уже брала</span>' : '';
+        return `<button class="copt ${cur===o.v?'sel':''}" onclick="pickCouncil('${s.key}','${o.v}')"><span class="cdot"></span><span>${o.t}</span>${usedMark}</button>`;
+      }).join('')}</div>
+      ${s.key==='emotion' && COUNCIL.section!=null ? councilAngleHint() : ''}
+      ${showInput?`<div style="margin-top:11px"><label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Твой черновик / надиктовка (как говоришь — так и пиши, консилиум причешет)</label><textarea id="cdraft" rows="6" style="width:100%;padding:10px 11px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit;color:var(--ink);outline:none;resize:vertical" oninput="COUNCIL.ans.draftText=this.value;updateCouncilNext()" placeholder="Например: Слушайте, вот честно, ребёнок каждый вечер зовёт меня на английский...">${COUNCIL.ans.draftText||''}</textarea></div>`:''}
+      </div>
+    </div>`;
+    const canNext = cur && (!(s.hasInput && cur==='draft') || (COUNCIL.ans.draftText||'').trim().length>10);
+    setCouncilFooter(
+      COUNCIL.step>0?`<button class="bs" onclick="councilBack()">← Назад</button>`:`<button class="bs" onclick="closeM()">Отмена</button>`,
+      `<button class="bp" onclick="councilNext()" ${canNext?'':'style="opacity:.5;pointer-events:none"'}>Далее →</button>`
+    );
+  } else {
+    // финал — собранный промпт
+    const prompt=buildCouncilPrompt();
+    document.getElementById('mtitle').textContent='🎯 Промпт готов';
+    document.getElementById('mbody').innerHTML=`<div class="cwrap">
+      <div class="cqhint" style="margin-bottom:10px">Скопируй промпт и вставь в чат с Claude (у тебя подписка Pro — бесплатно). Консилиум сначала уточнит детали, потом выдаст варианты. Лучший вернёшь сюда через «+ Версия».</div>
+      <div class="promptbox" id="cpromptbox">${escapeHtml(prompt)}</div>
+    </div>`;
+    setCouncilFooter(
+      `<button class="bs" onclick="councilBack()">← Назад</button>`,
+      `<button class="bp" onclick="copyCouncilPrompt()">📋 Скопировать промпт</button>`
+    );
+  }
+}
+function setCouncilFooter(left,right){
+  const mdb=document.querySelector('#modal .mdb');
+  mdb.innerHTML=left+right;
+}
+function pickCouncil(key,v){COUNCIL.ans[key]=v;renderCouncilStep();}
+function updateCouncilNext(){
+  const s=councilSteps[COUNCIL.step]; if(!s)return;
+  const cur=COUNCIL.ans[s.key];
+  const canNext = cur && (!(s.hasInput && cur==='draft') || (COUNCIL.ans.draftText||'').trim().length>10);
+  const btn=document.querySelector('#modal .mdb .bp');
+  if(btn){btn.style.opacity=canNext?'':'.5';btn.style.pointerEvents=canNext?'':'none';}
+}
+function councilNext(){COUNCIL.step++;renderCouncilStep();}
+function councilBack(){if(COUNCIL.step>0){COUNCIL.step--;renderCouncilStep();}else closeM();}
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function labelOf(key,v){const s=councilSteps.find(x=>x.key===key);const o=s.opts.find(x=>x.v===v);return o?o.t:v;}
+function councilAngleHint(){
+  const rid=uid(COUNCIL.section,COUNCIL.i);
+  const nx=mNextEmpty(rid);
+  const cnt=mCountReel(rid), tot=mTotalAngles();
+  if(cnt===0) return '<div class="cqhint" style="margin-top:8px;color:var(--e2)">Эту тему ты ещё не раскрывала ни разу — чистый лист.</div>';
+  let h=`<div class="cqhint" style="margin-top:8px">По этой теме уже раскрыто ракурсов: <strong>${cnt} из ${tot}</strong>.`;
+  if(nx) h+=` Ещё не бралось, например: <strong>${nx.axisLabel} → ${nx.angleLabel}</strong>.`;
+  h+='</div>';
+  return h;
+}
+
+function buildCouncilPrompt(){
+  const {section,i,ans}=COUNCIL;
+  const r=reelsData[section][i];
+  const stageName={e1_reels:'Этап 1 — Корень зла (холодная аудитория, вскрываем боль)',
+    e2_reels:'Этап 2 — Выгода (прогретые, ведём к покупке)',
+    e2_proof:'Этап 2 — Выгода, доказательства',
+    e2_conv:'Этап 2 — Выгода, конверсия в бот',
+    e3_reels:'Этап 3 — Смыслы (дожим через ценности)'}[section]||'';
+  const cur=r.versions.map(v=>'['+v.v+'] '+v.body).join('\n\n');
+  const source=ans.source;
+  let sourceBlock;
+  if(source==='draft' && (ans.draftText||'').trim()){
+    sourceBlock=`ИСТОЧНИК ТЕКСТА: у меня есть свой черновик — доведите его до чистого дикторского текста, сохранив мою манеру и живые формулировки, усилив хук и финал. НЕ выбрасывайте мои удачные фразы.
+
+МОЙ ЧЕРНОВИК (как надиктовала):
+"""
+${ans.draftText.trim()}
+"""`;
+  } else {
+    sourceBlock=`ИСТОЧНИК ТЕКСТА: пишите с нуля. В базе сейчас только схематичный набросок (ниже) — не копируйте его дословно, используйте только как ориентир по смыслу и кодовому слову.
+
+СХЕМАТИЧНЫЙ НАБРОСОК ИЗ БАЗЫ (только ориентир):
+${cur}`;
+  }
+  return `Ты — модератор консилиума топовых специалистов по контенту для Instagram Reels проекта «Лангуст» (онлайн-тренажёр английского Spotlight для 2–4 классов, аудитория — мамы 28–45 лет).
+
+СОСТАВ КОНСИЛИУМА:
+• Сценарист коротких видео — отвечает за хук и структуру
+• Детский психолог-педагог — следит за точностью боли и этичностью
+• SMM-стратег — отвечает за вовлечение и алгоритмы 2026
+• Копирайтер прямого отклика — отвечает за финал и переход в воронку
+
+ЗАДАЧА:
+• Этап воронки: ${stageName}
+• Тема: «${r.hook}»
+• Рубрика: ${r.rubric}
+• Кодовое слово (ведёт в бот): ${r.kw}
+• Что улучшить: ${labelOf('goal',ans.goal)}
+• Бьём в боль: ${labelOf('pain',ans.pain)}
+• Нужная эмоция у зрителя: ${labelOf('emotion',ans.emotion)}
+• Формат съёмки: ${labelOf('format',ans.format)}
+
+${sourceBlock}
+
+⭐ ГЛАВНОЕ ТРЕБОВАНИЕ — ПОЛНЫЙ ТЕКСТ, А НЕ НАБРОСОК:
+Дайте ПОЛНЫЙ дикторский текст — слово в слово, как я буду говорить в камеру. НЕ пишите схему вида «Хук: … Текст: … CTA: …» с двоеточиями и пропусками. Пишите живую связную речь целиком, готовую читать с экрана вслух. Каждое предложение — законченное, произносимое. Длину определите сами по теме — столько, сколько нужно, чтобы мысль дышала (обычно 30–60 секунд), не растягивайте искусственно.
+
+ГОЛОС — «АФИНА ДОМА» (важно):
+Я записываю не из школы, а дома, сидя у подоконника, как разговор с подругой-мамой. Поэтому текст — тёплый и разговорный, но по сути экспертный. Живые заходы: «Слушайте…», «Знаете, что я поняла за 16 лет…», «Давайте честно». Можно лёгкую иронию к абсурду школьной системы. НО: содержание остаётся точным и экспертным — я не кривляюсь, не кричу, не обещаю «миллионы». Спокойная уверенность человека, который знает систему. Не «иишный» гладкий текст — а живая человеческая речь с придыханием, паузами (обозначайте их), повторами для акцента.
+
+ПРАВИЛА ПРОЕКТА (строго):
+• Без «МАМОЧКИ!!!», капса, трёх восклицательных знаков.
+• Нельзя «одобрено Минобром» и «гарантируем пятёрки». Можно «лицензированная программа доп. образования».
+• Скрытая структура (не подписывать её в тексте!): цепляющее начало → усиление → суть → незавершённость/интрига → живой призыв с кодовым словом ${r.kw}.
+• Финал ведёт на кодовое слово в директ/бот, но естественно, не «в лоб».
+
+ПОРЯДОК РАБОТЫ:
+1. Сначала коротко обсудите задачу и задайте мне 1–3 уточняющих вопроса, если нужно. Если всё ясно — сразу к пункту 2.
+2. Выдайте 3 ПОЛНЫХ варианта текста (разные по подходу), каждый с короткой пометкой сверху — чем отличается. Сам текст — сплошной речью, готовой к озвучке.
+3. В конце — рекомендация модератора: какой вариант взять и почему.`;
+}
+function copyCouncilPrompt(){
+  const p=buildCouncilPrompt();
+  // авто-отметка в матрице: эмоция + механика (из рубрики)
+  if(COUNCIL.section!=null){
+    const rid=uid(COUNCIL.section,COUNCIL.i);
+    if(COUNCIL.ans.emotion && !mHas(rid,'emotion',COUNCIL.ans.emotion)) mSet(rid,'emotion',COUNCIL.ans.emotion);
+    const r=reelsData[COUNCIL.section][COUNCIL.i];
+    const mech=RUBRIC2MECH[r.rubric];
+    if(mech && !mHas(rid,'mechanic',mech)) mSet(rid,'mechanic',mech);
+  }
+  navigator.clipboard.writeText(p).then(()=>{toast('Промпт скопирован. Ракурс отмечен в матрице ✓');closeM();}).catch(()=>toast('Не удалось скопировать'));
+}
+
+/* ==================== СТАРТ ==================== */
+autoSeedMatrix();
+go('today',document.querySelector('.drawer .ni'));
+
+
+</script>
+</body>
+</html>
