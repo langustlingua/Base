@@ -295,3 +295,251 @@ create index promises_open_due_idx on promises(due_at) where status = 'open';
 create index enrollments_active_end_idx on enrollments(access_ends_at) where status in ('trial','active');
 create index payments_family_paid_idx on payments(family_id, paid_at desc) where status = 'succeeded';
 
+create table offers (
+  offer_id text primary key,
+  product_key text not null,
+  tariff_id text not null,
+  audience_rule text not null,
+  region text,
+  grade smallint,
+  price numeric(12,2) not null,
+  currency char(3) not null default 'RUB',
+  comparison_price numeric(12,2),
+  discount_message text,
+  promo_code text,
+  valid_from timestamptz not null,
+  valid_until timestamptz not null,
+  deadline_timezone text not null,
+  landing_url text not null,
+  checkout_url text,
+  status text not null check (status in ('draft','active','expired','cancelled')),
+  version integer not null default 1,
+  owner_user_id uuid,
+  created_at timestamptz not null default now(),
+  check (valid_until > valid_from)
+);
+
+create table message_templates (
+  template_id text not null,
+  version integer not null,
+  channel text not null check (channel in ('email','whatsapp','sms','in_app')),
+  message_class text not null check (message_class in ('service','marketing')),
+  program_key text not null,
+  funnel_role text,
+  subject text,
+  preview_text text,
+  body text not null,
+  primary_cta text,
+  required_consent text,
+  allowed_offer_ids text[] not null default '{}',
+  variables jsonb not null default '[]'::jsonb,
+  status text not null check (status in ('draft','reviewed','approved','active','deprecated','archived')),
+  owner_user_id uuid,
+  approved_at timestamptz,
+  last_reviewed_at timestamptz,
+  created_at timestamptz not null default now(),
+  primary key (template_id, version)
+);
+
+create table campaigns (
+  campaign_id uuid primary key default gen_random_uuid(),
+  campaign_key text not null unique,
+  purpose text not null,
+  status text not null check (status in ('draft','qa','dry_run','awaiting_approval','approved','scheduled','running','paused','completed','cancelled')),
+  audience_rule text not null,
+  exclusion_rules jsonb not null default '[]'::jsonb,
+  channel text not null,
+  template_id text not null,
+  template_version integer not null,
+  offer_id text references offers(offer_id),
+  required_consent text,
+  frequency_cap text not null,
+  stop_events text[] not null,
+  success_event text not null,
+  owner_user_id uuid not null,
+  scheduled_at timestamptz,
+  expires_at timestamptz,
+  created_at timestamptz not null default now(),
+  foreign key (template_id, template_version) references message_templates(template_id, version)
+);
+
+create table campaign_approvals (
+  approval_id uuid primary key default gen_random_uuid(),
+  campaign_id uuid not null references campaigns(campaign_id),
+  approved_by uuid not null,
+  approved_at timestamptz not null,
+  expires_at timestamptz not null,
+  template_hash text not null,
+  audience_hash text not null,
+  recipient_count integer not null check (recipient_count >= 0),
+  revoked_at timestamptz,
+  revoke_reason text
+);
+
+create table message_deliveries (
+  delivery_id uuid primary key default gen_random_uuid(),
+  campaign_id uuid references campaigns(campaign_id),
+  family_id uuid not null references families(family_id),
+  guardian_id uuid references guardians(guardian_id),
+  channel text not null,
+  normalized_destination_hash text not null,
+  template_id text not null,
+  template_version integer not null,
+  status text not null check (status in ('queued','sent','delivered','soft_bounce','hard_bounce','complaint','cancelled')),
+  idempotency_key text not null unique,
+  provider_message_id text,
+  queued_at timestamptz not null,
+  sent_at timestamptz,
+  delivered_at timestamptz,
+  replied_at timestamptz,
+  error_code text,
+  foreign key (template_id, template_version) references message_templates(template_id, version)
+);
+
+create table web_sessions (
+  session_id uuid primary key,
+  anonymous_id text,
+  family_id uuid references families(family_id),
+  started_at timestamptz not null,
+  ended_at timestamptz,
+  engaged_seconds integer not null default 0 check (engaged_seconds >= 0),
+  pages_viewed integer not null default 0 check (pages_viewed >= 0),
+  landing_url text,
+  referrer_domain text,
+  utm_source text,
+  utm_medium text,
+  utm_campaign text,
+  utm_content text,
+  device_class text,
+  browser_family text,
+  consent_state text,
+  environment text not null check (environment in ('production','staging','development','test'))
+);
+
+create table referrals (
+  referral_id uuid primary key default gen_random_uuid(),
+  referrer_family_id uuid not null references families(family_id),
+  invited_lead_id uuid references leads(lead_id),
+  referral_code text not null,
+  shared_at timestamptz,
+  converted_at timestamptz,
+  reward_type text,
+  reward_value numeric(12,2),
+  reward_status text check (reward_status in ('pending','approved','issued','cancelled')),
+  fraud_check_status text,
+  terms_version text
+);
+
+create table content_permissions (
+  permission_id uuid primary key default gen_random_uuid(),
+  family_id uuid not null references families(family_id),
+  asset_id text not null,
+  asset_type text not null,
+  internal_use boolean not null default false,
+  public_use boolean not null default false,
+  allowed_name text,
+  allowed_platforms text[] not null default '{}',
+  editing_allowed boolean not null default false,
+  granted_at timestamptz not null,
+  expires_at timestamptz,
+  withdrawn_at timestamptz,
+  proof_reference text
+);
+
+create table expenses (
+  expense_id uuid primary key default gen_random_uuid(),
+  category text not null,
+  vendor text,
+  amount numeric(12,2) not null check (amount >= 0),
+  currency char(3) not null,
+  incurred_at date not null,
+  campaign_key text,
+  course_id uuid references courses(course_id),
+  is_recurring boolean not null default false,
+  period_start date,
+  period_end date,
+  receipt_reference text,
+  note text
+);
+
+create table oauth_connections (
+  connection_id uuid primary key default gen_random_uuid(),
+  service text not null,
+  account_alias text not null,
+  scopes text[] not null,
+  data_categories text[] not null,
+  connected_at timestamptz not null,
+  approved_by uuid,
+  last_used_at timestamptz,
+  review_due_at timestamptz,
+  revoke_instructions text,
+  revoked_at timestamptz,
+  deletion_verified_at timestamptz
+);
+
+create table data_subject_requests (
+  request_id uuid primary key default gen_random_uuid(),
+  family_id uuid references families(family_id),
+  guardian_id uuid references guardians(guardian_id),
+  request_type text not null check (request_type in ('access','correction','export','withdraw_consent','delete','restrict','object')),
+  received_at timestamptz not null,
+  identity_verified_at timestamptz,
+  due_at timestamptz not null,
+  owner_user_id uuid not null,
+  status text not null check (status in ('new','verifying','in_progress','partially_fulfilled','fulfilled','denied','cancelled')),
+  resolution text,
+  completed_at timestamptz
+);
+
+create table integration_failures (
+  failure_id uuid primary key default gen_random_uuid(),
+  connector text not null,
+  external_event_id text,
+  safe_payload_hash text,
+  first_seen_at timestamptz not null,
+  last_seen_at timestamptz not null,
+  retry_count integer not null default 0,
+  error_category text not null,
+  impact text,
+  owner_user_id uuid,
+  status text not null check (status in ('open','retrying','dead_letter','resolved','ignored')),
+  resolution text
+);
+
+create table experiments (
+  experiment_id uuid primary key default gen_random_uuid(),
+  experiment_key text not null unique,
+  hypothesis text not null,
+  segment_rule text not null,
+  exclusion_rules jsonb not null default '[]'::jsonb,
+  primary_metric text not null,
+  guardrail_metrics text[] not null,
+  variants jsonb not null,
+  randomization_unit text not null default 'family_id',
+  started_at timestamptz,
+  ended_at timestamptz,
+  owner_user_id uuid not null,
+  status text not null check (status in ('draft','running','paused','completed','cancelled')),
+  result_summary text,
+  decision text
+);
+
+create table daily_family_snapshots (
+  snapshot_date date not null,
+  family_id uuid not null references families(family_id),
+  lifecycle_stage text not null,
+  active_enrollments integer not null,
+  days_since_learning integer,
+  health_score smallint check (health_score between 0 and 100),
+  open_cases integer not null,
+  net_revenue numeric(12,2) not null,
+  marketing_eligible boolean not null,
+  next_best_action text,
+  cohort_date date,
+  primary key (snapshot_date, family_id)
+);
+
+create index message_deliveries_family_time_idx on message_deliveries(family_id, queued_at desc);
+create index web_sessions_family_time_idx on web_sessions(family_id, started_at desc);
+create index offers_active_idx on offers(valid_until) where status = 'active';
+create index data_subject_requests_due_idx on data_subject_requests(due_at) where status not in ('fulfilled','denied','cancelled');

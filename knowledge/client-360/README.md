@@ -71,6 +71,12 @@
 | [32-offer-and-template-registry.md](32-offer-and-template-registry.md) | Единый источник цен, офферов и шаблонов |
 | [33-experiment-registry.md](33-experiment-registry.md) | Реестр гипотез, guardrails и правила тестов |
 | [34-data-warehouse.md](34-data-warehouse.md) | Аналитический слой, факты, измерения и snapshots |
+| [35-contact-outcome-codes.md](35-contact-outcome-codes.md) | Единые исходы звонков, писем, сообщений и встреч |
+| [36-attendance-and-absence.md](36-attendance-and-absence.md) | Посещаемость, пропуски, переносы и реактивация |
+| [37-daily-digest-spec.md](37-daily-digest-spec.md) | Утренний и вечерний дайджест для команды |
+| [38-permissions-matrix.md](38-permissions-matrix.md) | Роли, доступ к данным и опасные операции |
+| [39-risk-register.md](39-risk-register.md) | Реестр продуктовых, операционных и security-рисков |
+| [40-implementation-backlog.md](40-implementation-backlog.md) | Приоритизированный бэклог внедрения с критериями готовности |
 | [schema.sql](schema.sql) | Базовая SQL-схема Client 360 |
 | [views.sql](views.sql) | Представления семьи 360, воронки и очереди «Сегодня» |
 | [event-schema.json](event-schema.json) | Машиночитаемый контракт событий |
