@@ -302,6 +302,7 @@ main{max-width:760px;margin:0 auto;padding:16px 14px 30px}
   <div class="ni" onclick="go('e2_conv',this)">💰 Рилсы: конверсия</div>
   <div class="ni" onclick="go('e2_direct',this)">📩 Скрипты директа</div>
   <div class="ni" onclick="go('e2_funnel',this)">🤖 Бот + сторис</div>
+  <div class="ni" onclick="go('e2_postlead',this)">🧭 После заявки: 3 дня</div>
   <div class="ni" onclick="go('e2_price',this)">💳 Цены и возражения</div></div>
 
   <div class="ns"><div class="nl e3"><span class="dot"></span>Этап 3 · Смыслы</div>
@@ -1109,20 +1110,81 @@ function renderE2Conv(){renderReels('e2_conv',e2_conv,'sec-e2_conv',ehdr('e2','�
 function renderE2Direct(){document.getElementById('sec-e2_direct').innerHTML=ehdr('e2','Этап 2 · Выгода','📩 Скрипты директа','Пришло кодовое слово — НЕ слать ссылку сразу. Сначала персонализация, потом разбор, потом доступ.',['Ступени 1–3 вручную'])+`<div id="dlist"></div><button class="ba" onclick="addDirect()">+ Добавить скрипт</button>`;drawDirect();}
 function renderE2Funnel(){document.getElementById('sec-e2_funnel').innerHTML=ehdr('e2','Этап 2 · Выгода','🤖 Бот + сторис','Автоматизация 8 ступеней с таймерами и дедлайном. Сторис — ручной прогрев по той же логике.',['Прогрев'])
   +`<div class="card"><div class="ct">🤖 Бот (8 шагов)</div><p class="editable" data-edit="bot8">${ed('bot8','1. ВХОД — Боль + почему так происходит\n2. ПЕРВОЕ РЕШЕНИЕ — Бесплатный урок (лид-магнит)\n3. ДОЖИМ ЦЕННОСТИ — Бонусы (через 40 мин)\n4. ОФФЕР трипваера (через 1 мин), ограничение 1 час\n5. УСИЛЕНИЕ — Бонусы (через 2 мин)\n6. CTA + ПРИМЕР РЕЗУЛЬТАТА\n7. НАПОМИНАНИЕ №1 (через 30 мин)\n8. ПОСЛЕДНИЙ ШАНС (через 15 мин), FOMO. Не купил → в канал')}</p></div>
+  <div class="warn"><strong>⚠️ Разделение воронок</strong>Эта схема относится к пути до заявки. После выдачи 3 пробных дней не повторяем боль, бонусы и искусственный FOMO. Используем событийную воронку «После заявки: 3 дня».</div>
   <div class="card"><div class="ct">📱 Сторис (8 шагов)</div><p class="editable" data-edit="stories8">${ed('stories8','1. БОЛЬ — «это про меня»\n2. УСИЛЕНИЕ — что будет если не менять\n3. НОВОЕ РЕШЕНИЕ\n4. ЦЕННОСТЬ ПОДХОДА\n5. ЭКСПЕРТНОСТЬ\n6. КЕЙСЫ (до/после)\n7. ВОЗРАЖЕНИЯ\n8. CTA + ЛИД-МАГНИТ')}</p></div>
   <div class="card"><div class="ct">🎬 Структура конверсионного рилса (60 сек)</div><table class="pt">
   <tr><th>Блок</th><th>Время</th></tr><tr><td>Хук — удар в боль</td><td>0–3с</td></tr><tr><td>Подхук — снять сопротивление</td><td>3–8с</td></tr><tr><td>Суть — самодиагностика</td><td>8–35с</td></tr><tr><td>Микро-инсайт (петля)</td><td>35–45с</td></tr><tr><td>CTA → бот</td><td>45–60с</td></tr></table></div>`;
   bindEdits();
 }
+function renderE2PostLead(){
+  document.getElementById('sec-e2_postlead').innerHTML=
+  ehdr('e2','После заявки','🧭 3 пробных дня','Не календарная рассылка всем подряд, а событийная воронка: помочь войти → получить первый результат → подтвердить ценность → предложить продолжение.',['Email + WhatsApp','2 класс · Spotlight 2','События продукта'])
+  +`<div class="card"><div class="ct">🎯 Главная логика</div>
+  <p style="font-size:15px;font-weight:700;color:var(--navy)">Активация → первый успех → второй успех → ценность для родителя → оффер → конкретное возражение → реальный дедлайн.</p>
+  <p style="margin-top:8px">После заявки мама уже признала проблему. Не усиливаем вину и не раздаём бонусы. Сначала ребёнок пробует LANGUST на текущей теме Spotlight 2.</p></div>
+
+  <div class="warn"><strong>⚠️ Не смешивать цены</strong>Смоленск: только 2 класс, 7 900 ₽ за учебный год, 60% скидка, промокод «Смоленск», до 5 октября 2026. Для остальных лидов — только актуальный стандартный оффер. Старые суммы 6 590 ₽, 9 500 ₽, ≈500 ₽/мес. и 1 199 ₽/мес. автоматически не подставлять.</div>
+
+  <div class="card"><div class="ct">🧩 Состояние → следующий шаг</div><table class="pt">
+  <tr><th>Состояние</th><th>Что отправить</th><th>Не отправлять</th></tr>
+  <tr><td>Не вошёл</td><td>Помощь со входом</td><td>Цена, кейсы, «понравилось?»</td></tr>
+  <tr><td>Вошёл, не начал</td><td>Выбрать текущую тему</td><td>Дедлайн и методичку</td></tr>
+  <tr><td>Начал</td><td>Одно короткое действие</td><td>Похвалу за несуществующий результат</td></tr>
+  <tr class="hl"><td>Сделал упражнение</td><td>Зафиксировать «получается»</td><td>Ранний FOMO</td></tr>
+  <tr><td>Вернулся / закончил урок</td><td>Показать ценность родителю</td><td>Общие обещания</td></tr>
+  <tr><td>Начал оплату</td><td>Уточнить барьер</td><td>Повторный общий оффер</td></tr>
+  <tr><td>Купил</td><td>Следующая школьная тема</td><td>Любые продажи</td></tr></table></div>
+
+  <div class="card"><div class="ct">⏱️ Таймлайн</div><table class="pt">
+  <tr><th>Когда</th><th>Кому</th><th>Канал и задача</th></tr>
+  <tr><td>T+0</td><td>Все</td><td>Email: доступ + один первый шаг</td></tr>
+  <tr><td>T+10–20 мин</td><td>Все с разрешённым номером</td><td>WhatsApp: «Письмо нашли?»</td></tr>
+  <tr><td>T+2 часа</td><td>Не вошёл</td><td>WhatsApp: ссылка и помощь</td></tr>
+  <tr><td>Первое упражнение</td><td>Активный</td><td>Один канал: закрепить успех</td></tr>
+  <tr><td>День 2</td><td>По состоянию</td><td>Вход / завершение шага / второй урок</td></tr>
+  <tr class="hl"><td>День 3 утром</td><td>Активный, не купил</td><td>Email: релевантный оффер</td></tr>
+  <tr><td>−3 часа до конца</td><td>Активный, не купил</td><td>WhatsApp: честное напоминание</td></tr>
+  <tr><td>День 4</td><td>Не купил</td><td>Email: причина 1–5</td></tr>
+  <tr><td>После оплаты</td><td>Купил</td><td>Email: доступ + текущая тема</td></tr></table>
+  <p style="margin-top:9px;color:var(--muted);font-size:12px">Не более двух сообщений в сутки суммарно. Событийное сообщение заменяет календарное с той же задачей.</p></div>
+
+  <div class="subh">Готовые сообщения</div>
+  <div class="item"><div class="ih" onclick="tItem(this)"><div class="an">1</div><div class="am"><div class="ak">T+0 · доступ открыт</div><div class="as">Email · все лиды</div></div><span class="arrow">▼</span></div><div class="ib"><div class="at"><strong>Тема:</strong> {parent_name}, доступ к 3 пробным дням LANGUST открыт\n\nЗдравствуйте, {parent_name}!\n\nПробный доступ для {child_name_or_«ребёнка»} уже открыт.\n\nНачните с темы, которую ребёнок сейчас проходит в школе по Spotlight 2. В первый раз можно помочь только выбрать нужный урок. Дальше не спешите объяснять — просто посмотрите, сколько ребёнок сможет сделать сам.\n\nОткрыть курс: {trial_link}\n\nЕсли письмо со входом не пришло или что-то не открывается, ответьте на это письмо. Я помогу.\n\nТатьяна Владимировна · LANGUST</div></div></div>
+
+  <div class="item"><div class="ih" onclick="tItem(this)"><div class="an">2</div><div class="am"><div class="ak">T+10–20 минут · письмо найдено?</div><div class="as">WhatsApp · проверка доставки</div></div><span class="arrow">▼</span></div><div class="ib"><div class="at">Здравствуйте, {parent_name}! Это Татьяна из LANGUST. Доступ на 3 пробных дня уже отправлен на {masked_email}. Письмо удалось найти?\n\nЕсли нет, напишите «не вижу» — пришлю ссылку ещё раз и помогу войти.</div></div></div>
+
+  <div class="item"><div class="ih" onclick="tItem(this)"><div class="an">3A</div><div class="am"><div class="ak">Не вошёл · убрать технический барьер</div><div class="as">WhatsApp · T+2 часа</div></div><span class="arrow">▼</span></div><div class="ib"><div class="at">{parent_name}, вижу, что пробный курс пока не открывался. Возможно, письмо попало в «Спам» или «Промоакции».\n\nВот прямая ссылка: {trial_link}\n\nЕсли появится белый экран, ошибка входа или непонятно, куда нажать, пришлите скриншот — разберёмся. Сейчас задача только одна: открыть текущую тему Spotlight 2.</div></div></div>
+
+  <div class="item"><div class="ih" onclick="tItem(this)"><div class="an">3B</div><div class="am"><div class="ak">Первое упражнение выполнено</div><div class="as">Email или WhatsApp · по событию</div></div><span class="arrow">▼</span></div><div class="ib"><div class="at">{parent_name}, первый шаг уже сделан. Сейчас важнее не количество заданий, а то, что ребёнок понял порядок работы и смог выполнить упражнение.\n\nВо время следующего занятия выберите тему, которую проходят в школе, и снова дайте ребёнку сначала попробовать самому. Так вы увидите, переносится ли результат на обычную домашнюю работу.\n\nПродолжить: {trial_link}</div></div></div>
+
+  <div class="item"><div class="ih" onclick="tItem(this)"><div class="an">4</div><div class="am"><div class="ak">День 2 · развилка по активности</div><div class="as">Email / WhatsApp</div></div><span class="arrow">▼</span></div><div class="ib"><div class="at"><strong>Если не вошёл:</strong> не рассказывать о методике. Дать ссылку и попросить ответить одним словом: «письмо», «пароль», «экран» или «время».\n\n<strong>Если начал:</strong> предложить закончить ровно одно короткое упражнение.\n\n<strong>Если завершил:</strong> попросить оценить три вещи: понятен ли следующий шаг, сколько раз понадобилась помощь мамы, легче ли открыть школьный Spotlight после тренировки.</div></div></div>
+
+  <div class="item"><div class="ih" onclick="tItem(this)"><div class="an">5S</div><div class="am"><div class="ak">День 3 · оффер Смоленск</div><div class="as">Email · только campaign_smolensk</div></div><span class="arrow">▼</span></div><div class="ib"><div class="at"><strong>Тема:</strong> Продолжить Spotlight 2 на весь учебный год\n\nЗдравствуйте, {parent_name}!\n\nЗа пробные дни вы уже могли увидеть главное: подходит ли ребёнку формат и становится ли школьная тема понятнее без постоянного объяснения взрослого.\n\nДля второклассников Смоленска сейчас действует отдельное предложение: доступ к занятиям на учебный год — <strong>7 900 ₽ по промокоду «Смоленск»</strong>. Это <strong>60% скидка</strong> от обычной стоимости занятий за восемь месяцев.\n\nАкция действует до 5 октября. После этого смоленское предложение закроется.\n\nПосмотреть условия и продолжить занятия: https://langust.online/smolensk/\n\nЕсли сомневаетесь, подходит ли курс именно вашему ребёнку, ответьте: что он успел пройти и где понадобилась помощь.</div></div></div>
+
+  <div class="item"><div class="ih" onclick="tItem(this)"><div class="an">6</div><div class="am"><div class="ak">День 4 · причина 1–5</div><div class="as">Email · не купил</div></div><span class="arrow">▼</span></div><div class="ib"><div class="at"><strong>Тема:</strong> Что помешало принять решение?\n\nПробные 3 дня закончились. Чтобы не присылать вам неподходящие письма, можно ответить одной цифрой:\n\n1 — не успели попробовать;\n2 — ребёнку было сложно;\n3 — не нашли нужную тему Spotlight;\n4 — формат подошёл, но есть вопрос по цене;\n5 — пока неактуально.\n\nНа 1–4 отвечаем конкретно по ситуации. После «5» продажные сообщения прекращаются.</div></div></div>
+
+  <div class="card"><div class="ct">📍 Смоленск: отдельный дедлайн</div><table class="pt">
+  <tr><th>Когда</th><th>Сообщение</th></tr>
+  <tr><td>3 октября</td><td>Email: два дня до завершения; только тем, кто попробовал</td></tr>
+  <tr><td>5 октября, 10–12</td><td>Email: последний день, без новой аргументации</td></tr>
+  <tr><td>5 октября, 19–21</td><td>WhatsApp: последнее сообщение; в 00:00 предложение закрывается</td></tr></table>
+  <p style="margin-top:9px">Если напоминание об окончании пробника было менее 18 часов назад, утреннее письмо 5 октября пропускается. После покупки вся дедлайн-ветка отключается.</p></div>
+
+  <div class="card"><div class="ct">🛑 Стоп-правила</div><p>• Покупка выключает все офферы и дедлайны.<br>• Отказ или просьба не писать выключают продажную цепочку.<br>• Запрос поддержки ставит продажи на паузу.<br>• Не приписывать ребёнку действия, которых нет в данных.<br>• Не отправлять цену Смоленска без признака кампании.<br>• Не продлевать 5 октября и не создавать второй «последний день».<br>• Не использовать стыд и вину.</p></div>
+
+  <div class="card"><div class="ct">📊 Главные метрики</div><p><strong>Активация:</strong> first_login / trial_created<br><strong>Первый результат:</strong> first_activity_completed / trial_created<br><strong>Возврат:</strong> second_session_started / first_login<br><strong>Продажа:</strong> purchase_completed / activated_trials</p><p style="margin-top:8px">Если ребёнок не вошёл, это проблема доставки и onboarding, а не цены. Нельзя компенсировать слабую активацию более сильным дожимом.</p></div>
+
+  <div class="card"><div class="ct">📄 Полная спецификация</div><p>Все тексты, стандартная тарифная ветка, ответы на возражения, события, метрики и минимальная ручная реализация сохранены в <a href="https://github.com/langustlingua/Base/blob/main/knowledge/post-lead-funnel-3-day-trial.md" target="_blank" rel="noopener">knowledge/post-lead-funnel-3-day-trial.md</a>.</p></div>`;
+}
 function renderE2Price(){document.getElementById('sec-e2_price').innerHTML=ehdr('e2','Этап 2 · Выгода','💳 Цены и возражения','Единственный источник актуальных цен — сверять сюда.',['Справка + скрипты'])
   +`<div class="card"><div class="ct">💳 Тарифы</div><table class="pt"><tr><th>Тариф</th><th>Цена</th></tr>
-  <tr><td>Помесячная (1 класс)</td><td><strong>1 190 ₽/мес</strong></td></tr>
-  <tr class="hl"><td>🏆 Три класса (2–4)</td><td><strong style="color:var(--ok)">6 590 ₽</strong> ≈500/мес</td></tr>
-  <tr><td>На сайте</td><td><strong>9 500 ₽</strong></td></tr>
+  <tr class="hl"><td>Смоленск · 2 класс · до 5.10.2026</td><td><strong style="color:var(--ok)">7 900 ₽ за учебный год</strong><br>60% скидка · промокод «Смоленск»</td></tr>
+  <tr><td>Обычная стоимость в Смоленске</td><td><strong>2 400 ₽/мес × 8 мес = 19 200 ₽</strong></td></tr>
+  <tr><td>Стандартные тарифы</td><td><strong>Проверить на актуальной странице перед рассылкой</strong></td></tr>
   <tr><td>Пробный</td><td><strong style="color:var(--ok)">Бесплатно 3 дня</strong></td></tr></table></div>
   <div class="card"><div class="ct">📢 Как подавать цену</div>
-  <p class="editable" data-edit="priceok1" style="background:var(--sand);border-radius:7px;padding:8px 11px;margin-bottom:6px">${ed('priceok1','✅ «Около 500 рублей в месяц — меньше похода в кино»')}</p>
-  <p style="background:#FEE;border-radius:7px;padding:8px 11px">❌ «Всего 6590 рублей!» — воспринимается как большая сумма</p></div>
+  <p class="editable" data-edit="priceok1" style="background:var(--sand);border-radius:7px;padding:8px 11px;margin-bottom:6px">${ed('priceok1','✅ «Для второклассников Смоленска — 7 900 ₽ за учебный год по промокоду “Смоленск”. 60% скидка до 5 октября»')}</p>
+  <p style="background:#FEE;border-radius:7px;padding:8px 11px">❌ Не смешивать смоленскую акцию со стандартными тарифами и не использовать старые расчёты «≈500 ₽/мес.».</p></div>
   <div class="subh">Отработка возражений</div><div id="objlist"></div><button class="ba" onclick="addObj()">+ Добавить возражение</button>
   <div class="warn" style="margin-top:11px"><strong>⚠️ Не делать:</strong> Давить. Обесценивать репетитора. Обещать гарантированные пятёрки.</div>`;
   bindEdits();drawObj();
@@ -1311,7 +1373,7 @@ function renderRLegal(){document.getElementById('sec-r_legal').innerHTML=`<div c
 const rendered={};
 const renderMap={today:renderToday,fav:renderFav,search:renderSearch,home:renderHome,matrix:renderMatrix,howto:renderHowto,
   e1_idea:renderE1Idea,e1_reels:renderE1Reels,e1_posts:renderE1Posts,e1_comments:renderE1Comments,e1_hooks:renderE1Hooks,
-  e2_idea:renderE2Idea,e2_reels:renderE2Reels,e2_proof:renderE2Proof,e2_conv:renderE2Conv,e2_direct:renderE2Direct,e2_funnel:renderE2Funnel,e2_price:renderE2Price,
+  e2_idea:renderE2Idea,e2_reels:renderE2Reels,e2_proof:renderE2Proof,e2_conv:renderE2Conv,e2_direct:renderE2Direct,e2_funnel:renderE2Funnel,e2_postlead:renderE2PostLead,e2_price:renderE2Price,
   e3_idea:renderE3Idea,e3_reels:renderE3Reels,e3_posts:renderE3Posts,e3_forum:renderE3Forum,e3_nlp:renderE3Nlp,
   x_persona:renderXPersona,x_tone:renderXTone,x_pos:renderXPos,x_aud:renderXAud,x_kw:renderXKw,x_heads:renderXHeads,x_plan:renderXPlan,x_agents:renderXAgents,
   r_method:renderRMethod,r_legal:renderRLegal,r_data:renderData};
