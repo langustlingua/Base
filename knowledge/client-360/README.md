@@ -84,6 +84,12 @@
 | [45-family-journey-state-machine.md](45-family-journey-state-machine.md) | Состояния семьи, переходы и правила коммуникаций |
 | [46-trial-funnel-implementation.md](46-trial-funnel-implementation.md) | Исполняемые правила воронки трёх пробных дней и тесты |
 | [47-trial-operator-playbook.md](47-trial-operator-playbook.md) | Ручная очередь заявок и ежедневная работа Гузель |
+| [48-master-technical-specification.md](48-master-technical-specification.md) | Полное мастер-ТЗ на закрытую Client 360 и чек-лист сверки |
+| [49-chatbot-inventory-and-access-recovery.md](49-chatbot-inventory-and-access-recovery.md) | Поиск созданных ботов, ownership и безопасная ротация токенов |
+| [50-chatbot-master-specification.md](50-chatbot-master-specification.md) | Полное ТЗ на общую систему Telegram- и MAX-ботов |
+| [51-chatbot-funnel.md](51-chatbot-funnel.md) | Поведенческая воронка и готовые реплики чат-бота |
+| [chatbot-flow.json](chatbot-flow.json) | Машиночитаемые состояния и переходы бота |
+| [chatbot-schema.sql](chatbot-schema.sql) | SQL-схема ботов, диалогов, состояний и handoff |
 | [trial-funnel.json](trial-funnel.json) | Машиночитаемая карта триггеров, веток и стоп-событий |
 | [schema.sql](schema.sql) | Базовая SQL-схема Client 360 |
 | [views.sql](views.sql) | Представления семьи 360, воронки и очереди «Сегодня» |

@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0",
+  "flow_key": "langust_parent_to_trial_v1",
+  "status": "draft_dry_run_only",
+  "platforms": ["telegram", "max"],
+  "audience": "guardian",
+  "owner": "tatiana",
+  "entry_states": ["new", "existing_trial", "existing_customer", "support"],
+  "global_stop_events": [
+    "bot_marketing_opted_out",
+    "manual_suppression",
+    "complaint_received"
+  ],
+  "sales_stop_events": [
+    "purchase_completed",
+    "offer_declined",
+    "not_relevant"
+  ],
+  "sales_pause_events": [
+    "support_requested",
+    "refund_requested",
+    "privacy_request_opened",
+    "manual_reply_pending"
+  ],
+  "frequency_cap": {
+    "automatic_contacts_per_24h_all_channels": 2,
+    "marketing_requires_platform_consent": true
+  },
+  "states": [
+    {"key":"new","on":"bot_started","next":"guardian_check"},
+    {"key":"guardian_check","buttons":["guardian","existing_access","human"],"next_by_action":{"guardian":"grade","existing_access":"identify","human":"handoff"}},
+    {"key":"grade","buttons":["1","2","3","4","other"],"next":"problem"},
+    {"key":"problem","buttons":["instruction","memory","reading","independence","find_topic","other"],"next":"micro_value"},
+    {"key":"micro_value","next_by_action":{"try_trial":"trial_intent","human":"handoff","not_now":"paused"}},
+    {"key":"trial_intent","next":"minimal_data"},
+    {"key":"minimal_data","requires":["processing_consent","grade","school_book","delivery_contact"],"success_event":"lead_created","next":"access_pending"},
+    {"key":"access_pending","success_event":"trial_created","next":"trial_ready"},
+    {"key":"trial_ready","buttons":["open_course","choose_topic","login_help"],"next":"trial_behavior"},
+    {"key":"trial_behavior","branches":{"no_login":"activation_help","first_login":"choose_topic","first_activity_completed":"first_value","lesson_completed":"engaged","second_session_started":"engaged"}},
+    {"key":"first_value","next":"engaged"},
+    {"key":"engaged","eligibility":["not_purchased"],"next":"offer"},
+    {"key":"offer","template_branch":{"campaign_smolensk":"bot_11s","default":"bot_11g"},"next_by_action":{"checkout":"checkout","question":"handoff","decline":"suppressed_sales"}},
+    {"key":"checkout","branches":{"payment_succeeded":"purchased","checkout_abandoned":"checkout_help","payment_failed":"handoff"}},
+    {"key":"trial_expired","eligibility":["not_purchased"],"next":"objection"},
+    {"key":"objection","buttons":["no_time","too_hard","topic_missing","price","not_relevant","human"],"next_by_action":{"not_relevant":"suppressed_sales","human":"handoff","default":"next_best_action"}},
+    {"key":"handoff","creates":"support_case","pauses":["sales","marketing"],"next":"human_active"},
+    {"key":"purchased","requires":["payment_confirmed","access_confirmed"],"next":"onboarding"},
+    {"key":"onboarding","buttons":["open_course","choose_topic","notification_settings"]},
+    {"key":"suppressed_sales","terminal_for":"sales"},
+    {"key":"suppressed","terminal_for":"all_marketing"}
+  ],
+  "required_events": [
+    "bot_started",
+    "bot_start_source_resolved",
+    "bot_button_clicked",
+    "bot_problem_selected",
+    "bot_micro_value_viewed",
+    "bot_trial_requested",
+    "bot_identity_linked",
+    "bot_handoff_requested",
+    "bot_message_queued",
+    "bot_message_sent",
+    "bot_message_failed",
+    "bot_marketing_opted_in",
+    "bot_marketing_opted_out",
+    "lead_created",
+    "trial_created",
+    "first_login",
+    "first_activity_completed",
+    "lesson_completed",
+    "second_session_started",
+    "checkout_started",
+    "payment_succeeded"
+  ],
+  "release": {
+    "mode": "dry_run",
+    "requires_owner_approval": true,
+    "requires_secret_scan": true,
+    "requires_staging_allowlist": true,
+    "requires_kill_switch": true
+  }
+}
