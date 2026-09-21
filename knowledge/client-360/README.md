@@ -82,6 +82,9 @@
 | [43-incident-response.md](43-incident-response.md) | Уровни инцидентов, containment, восстановление и разбор |
 | [44-data-subject-requests.md](44-data-subject-requests.md) | Доступ, исправление, удаление и ограничение обработки |
 | [45-family-journey-state-machine.md](45-family-journey-state-machine.md) | Состояния семьи, переходы и правила коммуникаций |
+| [46-trial-funnel-implementation.md](46-trial-funnel-implementation.md) | Исполняемые правила воронки трёх пробных дней и тесты |
+| [47-trial-operator-playbook.md](47-trial-operator-playbook.md) | Ручная очередь заявок и ежедневная работа Гузель |
+| [trial-funnel.json](trial-funnel.json) | Машиночитаемая карта триггеров, веток и стоп-событий |
 | [schema.sql](schema.sql) | Базовая SQL-схема Client 360 |
 | [views.sql](views.sql) | Представления семьи 360, воронки и очереди «Сегодня» |
 | [event-schema.json](event-schema.json) | Машиночитаемый контракт событий |

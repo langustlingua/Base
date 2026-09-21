@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "program_key": "trial_3_days_v1",
+  "status": "draft_dry_run_only",
+  "owner": "tatiana",
+  "source_copy": "knowledge/post-lead-funnel-3-day-trial.md",
+  "timezone_strategy": "family_local",
+  "quiet_hours": { "send_from": "09:00", "send_until": "20:30" },
+  "frequency_cap": { "automatic_contacts_per_24h": 2, "all_channels_combined": true },
+  "priority": [
+    "privacy_or_refusal",
+    "complaint_or_refund",
+    "support",
+    "payment_access_mismatch",
+    "activation",
+    "learning_help",
+    "offer",
+    "deadline",
+    "content"
+  ],
+  "states": [
+    "created",
+    "delivered_no_login",
+    "logged_in_no_start",
+    "started_no_value",
+    "first_value",
+    "engaged",
+    "checkout",
+    "purchased",
+    "expired_inactive",
+    "expired_engaged",
+    "support_hold",
+    "suppressed"
+  ],
+  "global_stop_events": [
+    "purchase_completed",
+    "marketing_opt_out",
+    "complaint_received",
+    "manual_suppression"
+  ],
+  "global_pause_events": ["support_requested", "refund_requested"],
+  "steps": [
+    {
+      "key": "access_created",
+      "trigger": "trial_created",
+      "delay": "PT0M",
+      "channel": "email",
+      "template": "message_01_access",
+      "purpose": "service_access",
+      "success_event": "first_login",
+      "stop_events": ["purchase_completed", "support_requested"]
+    },
+    {
+      "key": "delivery_check",
+      "trigger": "trial_created",
+      "delay": "PT20M",
+      "eligibility": ["whatsapp_allowed", "not_first_login"],
+      "channel": "whatsapp",
+      "template": "message_02_delivery_check",
+      "purpose": "activation",
+      "success_event": "first_login",
+      "stop_events": ["first_login", "support_requested", "manual_reply"]
+    },
+    {
+      "key": "no_login_help",
+      "trigger": "trial_created",
+      "delay": "PT2H",
+      "eligibility": ["not_first_login"],
+      "channel": "best_allowed",
+      "template": "message_03a_no_login",
+      "purpose": "activation",
+      "success_event": "first_login",
+      "stop_events": ["first_login", "support_requested", "manual_reply"]
+    },
+    {
+      "key": "first_value_ack",
+      "trigger": "first_activity_completed",
+      "delay": "PT5M",
+      "channel": "best_allowed_single_channel",
+      "template": "message_03b_first_value",
+      "purpose": "learning_help",
+      "success_event": "second_session_started",
+      "once_per": "enrollment_id"
+    },
+    {
+      "key": "day_two_no_login",
+      "trigger": "trial_created",
+      "delay": "P1D",
+      "eligibility": ["not_first_login"],
+      "channel": "email",
+      "template": "message_04a_day_two_no_login",
+      "purpose": "activation",
+      "stop_events": ["first_login", "support_requested", "manual_reply"]
+    },
+    {
+      "key": "engaged_proof",
+      "trigger_any": ["lesson_completed", "second_session_started"],
+      "delay": "PT15M",
+      "channel": "email",
+      "template": "message_05_observed_value",
+      "purpose": "proof",
+      "once_per": "trial_id"
+    },
+    {
+      "key": "offer_after_experience",
+      "trigger_any": ["trial_day_3_morning", "lesson_completed"],
+      "eligibility": ["activated", "not_purchased", "marketing_allowed"],
+      "channel": "email",
+      "template_branch": {
+        "campaign_smolensk": "message_06s_smolensk_offer",
+        "default": "message_06g_standard_offer"
+      },
+      "purpose": "offer",
+      "stop_events": ["purchase_completed", "support_requested", "marketing_opt_out"]
+    },
+    {
+      "key": "trial_ending",
+      "trigger": "trial_ends_at",
+      "offset": "-PT3H",
+      "eligibility": ["activated", "not_purchased", "channel_allowed"],
+      "channel": "best_allowed",
+      "template_branch": {
+        "campaign_smolensk": "message_07s_smolensk_trial_end",
+        "default": "message_07g_standard_trial_end"
+      },
+      "purpose": "deadline",
+      "stop_events": ["purchase_completed", "support_requested", "marketing_opt_out"]
+    },
+    {
+      "key": "reason_branch",
+      "trigger": "trial_expired",
+      "delay": "P1D",
+      "eligibility": ["not_purchased", "marketing_allowed"],
+      "channel": "email",
+      "template": "message_08_reason_branch",
+      "purpose": "research",
+      "stop_events": ["purchase_completed", "marketing_opt_out"]
+    },
+    {
+      "key": "checkout_recovery",
+      "trigger": "checkout_started",
+      "delay": "P1D",
+      "eligibility": ["not_purchased", "channel_allowed"],
+      "channel": "best_allowed",
+      "template": "message_09_checkout_help",
+      "purpose": "payment_help",
+      "stop_events": ["purchase_completed", "manual_reply", "support_requested"]
+    },
+    {
+      "key": "purchase_onboarding",
+      "trigger": "purchase_completed",
+      "eligibility": ["access_confirmed"],
+      "channel": "email",
+      "template": "message_10_purchase_confirmed",
+      "purpose": "service_onboarding"
+    }
+  ],
+  "offers": {
+    "smolensk_2026": {
+      "eligibility": ["grade_2", "campaign_smolensk"],
+      "price_rub": 7900,
+      "discount_label": "60% скидка",
+      "promo_code": "Смоленск",
+      "ends_at": "2026-10-05T21:00:00Z",
+      "landing_page": "https://langust.online/smolensk/"
+    },
+    "standard": {
+      "source": "active_offer_registry",
+      "hardcoded_price_forbidden": true
+    }
+  },
+  "release": {
+    "mode": "dry_run",
+    "requires_owner_approval": true,
+    "approval_expires": true,
+    "kill_switch_required": true
+  }
+}
