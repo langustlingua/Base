@@ -54,9 +54,28 @@
 | [15-progressive-profiling.md](15-progressive-profiling.md) | Какие сведения и в какой момент собирать |
 | [16-retention-calendar.md](16-retention-calendar.md) | Календарь отношений на месяц и учебный год |
 | [17-operating-rhythm.md](17-operating-rhythm.md) | Ежедневные, недельные, месячные и квартальные процессы |
+| [18-campaign-governance.md](18-campaign-governance.md) | Dry run, одобрение владельца и безопасный запуск кампаний |
+| [19-attribution-and-utm.md](19-attribution-and-utm.md) | Источники, UTM, QR и модели атрибуции |
+| [20-web-analytics-implementation.md](20-web-analytics-implementation.md) | Реализация web-событий и engaged time |
+| [21-consent-and-preference-center.md](21-consent-and-preference-center.md) | Центр согласий, отписка, email verification и OAuth |
+| [22-parent-reports.md](22-parent-reports.md) | Недельные и месячные отчёты родителям |
+| [23-churn-and-winback.md](23-churn-and-winback.md) | Риск ухода, причины и корректный возврат |
+| [24-referrals-reviews-and-ugc.md](24-referrals-reviews-and-ugc.md) | Рекомендации, отзывы, кейсы и права UGC |
+| [25-financial-operations.md](25-financial-operations.md) | Доходы, расходы, прибыль, подписки и сверка |
+| [26-support-sla-and-self-service.md](26-support-sla-and-self-service.md) | SLA поддержки, макросы и самообслуживание |
+| [27-retention-matrix.md](27-retention-matrix.md) | Категории сроков хранения и удаление семьи |
+| [28-security-operations.md](28-security-operations.md) | 2FA, OAuth, API keys, backups и security review |
+| [29-integration-contracts.md](29-integration-contracts.md) | Webhook-контракты Tilda, ProgressMe, Robokassa и каналов |
+| [30-qa-and-release-checklists.md](30-qa-and-release-checklists.md) | QA импорта, автоматизаций, кабинета и релизов |
+| [31-customer-dates-and-occasions.md](31-customer-dates-and-occasions.md) | Дни рождения, годовщины, учебные и операционные даты |
+| [32-offer-and-template-registry.md](32-offer-and-template-registry.md) | Единый источник цен, офферов и шаблонов |
+| [33-experiment-registry.md](33-experiment-registry.md) | Реестр гипотез, guardrails и правила тестов |
+| [34-data-warehouse.md](34-data-warehouse.md) | Аналитический слой, факты, измерения и snapshots |
 | [schema.sql](schema.sql) | Базовая SQL-схема Client 360 |
 | [views.sql](views.sql) | Представления семьи 360, воронки и очереди «Сегодня» |
 | [event-schema.json](event-schema.json) | Машиночитаемый контракт событий |
+| [campaign-schema.json](campaign-schema.json) | Машиночитаемый контракт кампании |
+| [message-template-schema.json](message-template-schema.json) | Машиночитаемый контракт шаблона сообщения |
 
 ## Основные сущности
 

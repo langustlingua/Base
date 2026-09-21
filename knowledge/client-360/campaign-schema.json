@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://langust.online/schemas/campaign-v1.json",
+  "title": "LANGUST Campaign",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "campaign_key",
+    "purpose",
+    "status",
+    "audience_rule",
+    "exclusion_rules",
+    "channel",
+    "template_id",
+    "frequency_cap",
+    "stop_events",
+    "success_event",
+    "owner"
+  ],
+  "properties": {
+    "campaign_key": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+    "purpose": {"type": "string", "minLength": 3},
+    "status": {
+      "type": "string",
+      "enum": ["draft", "qa", "dry_run", "awaiting_approval", "approved", "scheduled", "running", "paused", "completed", "cancelled"]
+    },
+    "audience_rule": {"type": "string"},
+    "exclusion_rules": {"type": "array", "items": {"type": "string"}},
+    "channel": {"type": "string", "enum": ["email", "whatsapp", "phone_task", "in_app"]},
+    "template_id": {"type": "string"},
+    "offer_id": {"type": ["string", "null"]},
+    "required_consent": {"type": ["string", "null"]},
+    "frequency_cap": {"type": "string"},
+    "stop_events": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "success_event": {"type": "string"},
+    "owner": {"type": "string"},
+    "expires_at": {"type": ["string", "null"], "format": "date-time"},
+    "approval": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["approved_by", "approved_at", "template_hash", "audience_hash", "recipient_count", "expires_at"],
+      "properties": {
+        "approved_by": {"type": "string"},
+        "approved_at": {"type": "string", "format": "date-time"},
+        "template_hash": {"type": "string"},
+        "audience_hash": {"type": "string"},
+        "recipient_count": {"type": "integer", "minimum": 0},
+        "expires_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}
+

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://langust.online/schemas/message-template-v1.json",
+  "title": "LANGUST Message Template",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "template_id",
+    "version",
+    "channel",
+    "message_class",
+    "program_key",
+    "body",
+    "variables",
+    "status",
+    "owner"
+  ],
+  "properties": {
+    "template_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+    "version": {"type": "integer", "minimum": 1},
+    "channel": {"type": "string", "enum": ["email", "whatsapp", "sms", "in_app"]},
+    "message_class": {"type": "string", "enum": ["service", "marketing"]},
+    "program_key": {"type": "string"},
+    "funnel_role": {"type": ["string", "null"]},
+    "subject": {"type": ["string", "null"]},
+    "preview_text": {"type": ["string", "null"]},
+    "body": {"type": "string", "minLength": 1},
+    "primary_cta": {"type": ["string", "null"]},
+    "required_consent": {"type": ["string", "null"]},
+    "allowed_offer_ids": {"type": "array", "items": {"type": "string"}},
+    "variables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "required"],
+        "properties": {
+          "name": {"type": "string"},
+          "required": {"type": "boolean"},
+          "fallback": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "status": {"type": "string", "enum": ["draft", "reviewed", "approved", "active", "deprecated", "archived"]},
+    "owner": {"type": "string"},
+    "approved_at": {"type": ["string", "null"], "format": "date-time"},
+    "last_reviewed_at": {"type": ["string", "null"], "format": "date-time"}
+  }
+}
+
