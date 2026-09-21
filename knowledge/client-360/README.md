@@ -77,6 +77,11 @@
 | [38-permissions-matrix.md](38-permissions-matrix.md) | Роли, доступ к данным и опасные операции |
 | [39-risk-register.md](39-risk-register.md) | Реестр продуктовых, операционных и security-рисков |
 | [40-implementation-backlog.md](40-implementation-backlog.md) | Приоритизированный бэклог внедрения с критериями готовности |
+| [41-email-deliverability.md](41-email-deliverability.md) | Репутация домена, bounce, complaints и остановка кампаний |
+| [42-metric-dictionary.md](42-metric-dictionary.md) | Канонические формулы продуктовых, финансовых и email-метрик |
+| [43-incident-response.md](43-incident-response.md) | Уровни инцидентов, containment, восстановление и разбор |
+| [44-data-subject-requests.md](44-data-subject-requests.md) | Доступ, исправление, удаление и ограничение обработки |
+| [45-family-journey-state-machine.md](45-family-journey-state-machine.md) | Состояния семьи, переходы и правила коммуникаций |
 | [schema.sql](schema.sql) | Базовая SQL-схема Client 360 |
 | [views.sql](views.sql) | Представления семьи 360, воронки и очереди «Сегодня» |
 | [event-schema.json](event-schema.json) | Машиночитаемый контракт событий |
