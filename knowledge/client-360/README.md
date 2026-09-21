@@ -51,7 +51,11 @@
 | [12-import-and-data-quality.md](12-import-and-data-quality.md) | Импорт `clients.json`, дубли и проверки качества |
 | [13-automation-rules.md](13-automation-rules.md) | Каталог триггерных автоматизаций и приоритеты |
 | [14-feedback-and-research.md](14-feedback-and-research.md) | Обратная связь, интервью, дневниковые исследования и кейсы |
+| [15-progressive-profiling.md](15-progressive-profiling.md) | Какие сведения и в какой момент собирать |
+| [16-retention-calendar.md](16-retention-calendar.md) | Календарь отношений на месяц и учебный год |
+| [17-operating-rhythm.md](17-operating-rhythm.md) | Ежедневные, недельные, месячные и квартальные процессы |
 | [schema.sql](schema.sql) | Базовая SQL-схема Client 360 |
+| [views.sql](views.sql) | Представления семьи 360, воронки и очереди «Сегодня» |
 | [event-schema.json](event-schema.json) | Машиночитаемый контракт событий |
 
 ## Основные сущности
