@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0",
+  "program_key": "langust_ugc_learning_reality_v1",
+  "status": "design_only",
+  "working_title": "Я сам!",
+  "owner": "tatiana",
+  "default_share_rate": 0.5,
+  "financial_model": {
+    "recommended_base": "commissionable_net_receipts",
+    "formula": "gross_cash_received - refunds - chargebacks - allowed_direct_deductions",
+    "hold_days": "agreement_defined",
+    "source_of_truth": "payment_ledger",
+    "metrica_is_source_of_truth": false
+  },
+  "attribution_priority": [
+    "valid_creator_promo_code",
+    "signed_creator_link",
+    "last_eligible_creator_touch",
+    "manual_verified_self_report",
+    "unattributed"
+  ],
+  "publication_states": [
+    "captured",
+    "uploaded",
+    "redaction_required",
+    "parent_review",
+    "brand_review",
+    "legal_marking",
+    "approved",
+    "scheduled",
+    "published",
+    "expired",
+    "withdrawn",
+    "rejected"
+  ],
+  "commission_states": [
+    "provisional",
+    "held",
+    "confirmed",
+    "statement",
+    "payable",
+    "paid",
+    "reversed",
+    "adjusted",
+    "disputed"
+  ],
+  "public_profile": {
+    "default_identity": "avatar_and_pseudonym",
+    "default_search_indexing": "noindex_noarchive",
+    "publication_delay_hours": 48,
+    "highlight_circles": [
+      "Старт",
+      "Первая неделя",
+      "Слова",
+      "Spotlight",
+      "Я сам!",
+      "Маме легче",
+      "Результаты",
+      "Честно",
+      "Вопросы"
+    ],
+    "forbidden_public_fields": [
+      "exact_birth_date",
+      "school",
+      "class_letter",
+      "address",
+      "geolocation",
+      "exact_schedule",
+      "guardian_contacts",
+      "payment_data",
+      "support_messages"
+    ]
+  },
+  "required_approvals": [
+    "verified_guardian_permission",
+    "child_assent",
+    "privacy_review",
+    "brand_review",
+    "advertising_classification",
+    "owner_approval"
+  ],
+  "creator_portal_privacy": {
+    "buyer_pii_visible": false,
+    "raw_client_ids_visible": false,
+    "raw_audience_messages_visible": false,
+    "question_cluster_min_people": 5
+  },
+  "funnel_events": [
+    "creator_link_clicked",
+    "ugc_profile_viewed",
+    "ugc_highlight_opened",
+    "ugc_episode_viewed",
+    "ugc_video_started",
+    "ugc_video_completed",
+    "ugc_cta_clicked",
+    "lead_created",
+    "trial_created",
+    "first_login",
+    "first_activity_completed",
+    "second_session_started",
+    "checkout_started",
+    "payment_succeeded",
+    "payment_refunded",
+    "active_day_7"
+  ],
+  "recommendation_confidence": [
+    "exploratory",
+    "directional",
+    "strong",
+    "blocked"
+  ],
+  "stop_conditions": [
+    "child_declines",
+    "guardian_withdraws",
+    "privacy_incident",
+    "harassment_detected",
+    "rights_unclear",
+    "advertising_marking_missing",
+    "misleading_claims",
+    "content_harms_learning"
+  ],
+  "release": {
+    "requires_contract": true,
+    "requires_legal_review": true,
+    "requires_accounting_review": true,
+    "requires_staging": true,
+    "requires_synthetic_financial_test": true,
+    "requires_takedown_drill": true
+  }
+}

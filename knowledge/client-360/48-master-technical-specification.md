@@ -1289,6 +1289,11 @@ Win-back, referrals, reviews, experiments, учебный календарь, н
 - [`40-implementation-backlog.md`](40-implementation-backlog.md) — приоритеты;
 - [`46-trial-funnel-implementation.md`](46-trial-funnel-implementation.md) — реализация пробника;
 - [`47-trial-operator-playbook.md`](47-trial-operator-playbook.md) — работа оператора.
+- [`52-ugc-learning-reality-program.md`](52-ugc-learning-reality-program.md) — учебное UGC-реалити;
+- [`53-creator-portal-specification.md`](53-creator-portal-specification.md) — кабинет креатора;
+- [`54-ugc-attribution-revenue-share.md`](54-ugc-attribution-revenue-share.md) — атрибуция и модель 50/50;
+- [`55-child-ugc-consent-and-safety.md`](55-child-ugc-consent-and-safety.md) — безопасность детского контента;
+- [`56-creator-analytics-recommendations.md`](56-creator-analytics-recommendations.md) — рекомендации креатору.
 
 ## 42. Принцип принятия решений
 

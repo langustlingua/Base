@@ -88,8 +88,16 @@
 | [49-chatbot-inventory-and-access-recovery.md](49-chatbot-inventory-and-access-recovery.md) | Поиск созданных ботов, ownership и безопасная ротация токенов |
 | [50-chatbot-master-specification.md](50-chatbot-master-specification.md) | Полное ТЗ на общую систему Telegram- и MAX-ботов |
 | [51-chatbot-funnel.md](51-chatbot-funnel.md) | Поведенческая воронка и готовые реплики чат-бота |
+| [52-ugc-learning-reality-program.md](52-ugc-learning-reality-program.md) | Публичное учебное реалити, карточка ребёнка и рубрика креатора |
+| [53-creator-portal-specification.md](53-creator-portal-specification.md) | Кабинет креатора: воронка, контент, деньги и уведомления |
+| [54-ugc-attribution-revenue-share.md](54-ugc-attribution-revenue-share.md) | UTM, Метрика, атрибуция и прозрачная модель 50/50 |
+| [55-child-ugc-consent-and-safety.md](55-child-ugc-consent-and-safety.md) | Согласия, публикация детского контента и stop conditions |
+| [56-creator-analytics-recommendations.md](56-creator-analytics-recommendations.md) | Рекомендации креатору по этапам воронки и вопросам аудитории |
+| [57-ugc-pilot-roadmap.md](57-ugc-pilot-roadmap.md) | Порядок запуска первого UGC-сезона и критерии масштабирования |
 | [chatbot-flow.json](chatbot-flow.json) | Машиночитаемые состояния и переходы бота |
 | [chatbot-schema.sql](chatbot-schema.sql) | SQL-схема ботов, диалогов, состояний и handoff |
+| [creator-ugc-schema.sql](creator-ugc-schema.sql) | SQL-схема креаторов, контента, прав, атрибуции и выплат |
+| [ugc-program.json](ugc-program.json) | Машиночитаемый контракт UGC-программы |
 | [trial-funnel.json](trial-funnel.json) | Машиночитаемая карта триггеров, веток и стоп-событий |
 | [schema.sql](schema.sql) | Базовая SQL-схема Client 360 |
 | [views.sql](views.sql) | Представления семьи 360, воронки и очереди «Сегодня» |
