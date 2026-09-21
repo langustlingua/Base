@@ -1,0 +1,23 @@
+# Never commit real customer or child data to this public repository.
+.env
+.env.*
+data/
+exports/
+backups/
+uploads/
+private/
+clients.json
+client360.db
+*.sqlite
+*.sqlite3
+*.csv
+*.xlsx
+*.xls
+*.sql.gz
+*.dump
+*.bak
+*.pem
+*.key
+*.p12
+*.pfx
+

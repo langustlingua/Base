@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://langust.online/schemas/client360-event-v1.json",
+  "title": "LANGUST Client 360 Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_name",
+    "occurred_at",
+    "source",
+    "properties",
+    "schema_version"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]+$"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "tilda",
+        "website",
+        "cabinet",
+        "progressme",
+        "robokassa",
+        "email",
+        "whatsapp",
+        "phone",
+        "manual",
+        "system"
+      ]
+    },
+    "anonymous_id": {
+      "type": ["string", "null"],
+      "maxLength": 200
+    },
+    "family_id": {
+      "type": ["string", "null"],
+      "format": "uuid"
+    },
+    "guardian_id": {
+      "type": ["string", "null"],
+      "format": "uuid"
+    },
+    "student_id": {
+      "type": ["string", "null"],
+      "format": "uuid"
+    },
+    "session_id": {
+      "type": ["string", "null"],
+      "format": "uuid"
+    },
+    "properties": {
+      "type": "object",
+      "description": "Event-specific data. Never include passwords, payment card data or unstructured PII."
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    }
+  },
+  "anyOf": [
+    {"required": ["anonymous_id"]},
+    {"required": ["family_id"]},
+    {"required": ["guardian_id"]},
+    {"required": ["student_id"]}
+  ]
+}
+

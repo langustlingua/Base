@@ -312,6 +312,14 @@ main{max-width:760px;margin:0 auto;padding:16px 14px 30px}
   <div class="ni" onclick="go('e3_forum',this)">🌐 Посты для форума</div>
   <div class="ni" onclick="go('e3_nlp',this)">🧠 НЛП-приёмы (10)</div></div>
 
+  <div class="ns"><div class="nl ref"><span class="dot"></span>Client 360</div>
+  <div class="ni" onclick="go('crm_overview',this)">🧭 Карта системы</div>
+  <div class="ni" onclick="go('crm_today',this)">☑️ Работа на сегодня</div>
+  <div class="ni" onclick="go('crm_data',this)">🗃️ Данные и события</div>
+  <div class="ni" onclick="go('crm_comms',this)">✉️ Контакты и рассылки</div>
+  <div class="ni" onclick="go('crm_metrics',this)">📊 Оплаты и метрики</div>
+  <div class="ni" onclick="go('crm_privacy',this)">🔒 Приватность</div></div>
+
   <div class="ns"><div class="nl ref"><span class="dot"></span>Сквозное</div>
   <div class="ni" onclick="go('x_persona',this)">🎭 Персонаж «Афина»</div>
   <div class="ni" onclick="go('x_tone',this)">💬 Тон, стиль, съёмка</div>
@@ -1211,6 +1219,45 @@ function renderE3Forum(){document.getElementById('sec-e3_forum').innerHTML=ehdr(
   drawForum('all');}
 function renderE3Nlp(){document.getElementById('sec-e3_nlp').innerHTML=ehdr('e3','Этап 3 · Смыслы','🧠 НЛП-приёмы','10 техник, вшитых в смысловые посты. Особенно на дожиме.',['10 техник'])+nlpItems.map(n=>`<div class="card"><div class="ct">🧠 ${n.n}</div><p style="margin-bottom:6px">${n.d}</p><div style="background:var(--cream);border-radius:7px;padding:8px 10px;font-size:12.5px;color:var(--muted)"><em>${n.e}</em></div></div>`).join('');}
 
+/* ==================== CLIENT 360 ==================== */
+const crmBase='https://github.com/langustlingua/Base/blob/main/knowledge/client-360/';
+function crmLink(file,label){return `<a href="${crmBase+file}" target="_blank" rel="noopener">${label}</a>`;}
+function renderCRMOverview(){document.getElementById('sec-crm_overview').innerHTML=`<div class="st">🧭 LANGUST Client 360</div><div class="ss">Единая память о семье: контакты, дети, обучение, оплаты, коммуникации, согласия и следующий шаг.</div>
+  <div class="warn"><strong>🔒 Публичный репозиторий</strong>Здесь хранятся только схемы и правила. Реальные ФИО, телефоны, email, даты рождения детей, платежи, переписка, exports и clients.json в GitHub запрещены.</div>
+  <div class="card"><div class="ct">🏠 Карточка семьи</div><p>Родители и дети · курсы и текущая школьная тема · история контактов · активность · оплаты · согласия · задачи · риск ухода · следующий лучший шаг.</p></div>
+  <div class="card"><div class="ct">🧱 Контуры</div><table class="pt"><tr><th>Источник</th><th>Источник истины</th></tr><tr><td>Tilda / сайт</td><td>Заявка, UTM, источник</td></tr><tr><td>ProgressMe</td><td>Учебный прогресс и доступ</td></tr><tr><td>Robokassa</td><td>Платёж и возврат</td></tr><tr><td>Email / WhatsApp</td><td>Доставка и контакт</td></tr><tr><td>Client 360</td><td>Семья, согласия, статус, задачи</td></tr></table></div>
+  <div class="card"><div class="ct">📚 Спецификация</div><p>${crmLink('README.md','Обзор')} · ${crmLink('01-system-map.md','Карта системы')} · ${crmLink('10-implementation-roadmap.md','План внедрения')} · ${crmLink('11-admin-console.md','Админ-консоль')}</p></div>`;}
+
+function renderCRMToday(){document.getElementById('sec-crm_today').innerHTML=`<div class="st">☑️ Работа на сегодня</div><div class="ss">Не графики ради графиков, а очередь действий для Татьяны и Гузель.</div>
+  <div class="card"><div class="ct">🌅 Утром</div><p>1. Новые заявки без ответа.<br>2. Пробники без входа более 2 часов.<br>3. Пробники, заканчивающиеся сегодня.<br>4. Входящие без ответа.<br>5. Оплата есть, доступа нет.<br>6. Просроченные обещания.<br>7. Ошибки платежа и высокий риск ухода.<br>8. Разрешённые поздравления.</p></div>
+  <div class="card"><div class="ct">🌙 Вечером</div><p>Обработанные заявки · активированные пробники · закрытые вопросы · перенесённые обещания · повторяющиеся проблемы · решения, которые нужны от Татьяны.</p></div>
+  <div class="warn"><strong>Правило приоритета</strong>Приватность → жалоба/возврат → обещание → поддержка → доступ/оплата → помощь в обучении → удержание → продажа → общий контент.</div>
+  <div class="card"><div class="ct">📖 Подробнее</div><p>${crmLink('05-communications-journals.md','Дневники и журналы')} · ${crmLink('13-automation-rules.md','Каталог автоматизаций')}</p></div>`;}
+
+function renderCRMData(){document.getElementById('sec-crm_data').innerHTML=`<div class="st">🗃️ Данные и события</div><div class="ss">Три уровня: семья → родитель → ребёнок. Не одна плоская строка «клиент».</div>
+  <div class="card"><div class="ct">🔑 Главные ID</div><p>family_id · guardian_id · student_id · lead_id · enrollment_id · interaction_id · payment_id · event_id.</p></div>
+  <div class="card"><div class="ct">⚡ Минимальные события</div><p>form_submitted → trial_created → first_login → lesson_started → activity_completed → second_session_started → checkout_started → payment_succeeded.</p></div>
+  <div class="card"><div class="ct">🧹 Импорт 182 семей</div><p>clients.json загружается только в staging. Точные совпадения объединяются по устойчивым ID; спорные пары показывает человеку. Сохраняется карта old_id → new_id и отчёт качества.</p></div>
+  <div class="card"><div class="ct">📖 Подробнее</div><p>${crmLink('02-data-dictionary.md','Словарь данных')} · ${crmLink('03-event-taxonomy.md','События')} · ${crmLink('schema.sql','SQL-схема')} · ${crmLink('event-schema.json','JSON Schema')} · ${crmLink('12-import-and-data-quality.md','Импорт и качество')}</p></div>`;}
+
+function renderCRMComms(){document.getElementById('sec-crm_comms').innerHTML=`<div class="st">✉️ Контакты и рассылки</div><div class="ss">Email, WhatsApp, звонки, поддержка, обещания и разрешённая частота в одной истории семьи.</div>
+  <div class="card"><div class="ct">📮 Программы</div><p>Welcome · 3 пробных дня · не вошёл · брошенная оплата · onboarding · первая неделя · низкая активность · продление · milestone · риск ухода · win-back · новый учебный год · рекомендация · день рождения.</p></div>
+  <div class="card"><div class="ct">🗂️ Журналы</div><p>Контакты · дневник семьи · учебный дневник ребёнка · поддержка · обещания · возражения · задачи · исследования · разрешения на отзыв.</p></div>
+  <div class="warn"><strong>Частота</strong>Не более двух автоматических коммуникаций в сутки. Человеческий ответ и открытая проблема ставят продажи на паузу. Отказ от маркетинга действует глобально.</div>
+  <div class="card"><div class="ct">📖 Подробнее</div><p>${crmLink('04-email-lifecycle.md','Email lifecycle')} · ${crmLink('05-communications-journals.md','Журналы')} · ${crmLink('13-automation-rules.md','Автоматизации')} · ${crmLink('14-feedback-and-research.md','Обратная связь')}</p></div>`;}
+
+function renderCRMMetrics(){document.getElementById('sec-crm_metrics').innerHTML=`<div class="st">📊 Оплаты и метрики</div><div class="ss">Считать не только заявки и open rate, а первый результат, повторное использование и удержание.</div>
+  <div class="card"><div class="ct">🪜 Главная воронка</div><p>Посетитель → заявка → доступ → вход → урок → первое упражнение → повторная сессия → тариф → checkout → оплата → активность через 7 дней → продление.</p></div>
+  <div class="card"><div class="ct">💳 Сверка</div><p>Robokassa ↔ доступ ProgressMe / кабинет ↔ чек ↔ Client 360. Исключения: оплата без доступа, возврат с активным доступом, сумма или тариф не совпадают.</p></div>
+  <div class="card"><div class="ct">⏱️ Время на сайте</div><p>Engaged time считается только в видимой активной вкладке. Не записываем движения мыши, пароли, платёжные поля и содержимое формы до отправки.</p></div>
+  <div class="card"><div class="ct">📖 Подробнее</div><p>${crmLink('06-payments-visits-learning.md','Оплаты, визиты, обучение')} · ${crmLink('07-segmentation-scoring.md','Сегментация')} · ${crmLink('08-dashboards-kpis.md','Дашборды')}</p></div>`;}
+
+function renderCRMPrivacy(){document.getElementById('sec-crm_privacy').innerHTML=`<div class="st">🔒 Приватность и безопасность</div><div class="ss">Детские данные требуют минимизации, понятной цели и ограниченного доступа.</div>
+  <div class="warn"><strong>Главный запрет</strong>Не коммитить реальные данные, clients.json, выгрузки, БД, ключи и резервные копии. Для этого в репозиторий добавлен .gitignore.</div>
+  <div class="card"><div class="ct">✅ Отдельные решения</div><p>Обработка заявки и обучение · email-маркетинг · маркетинг в WhatsApp · необязательная аналитика · отзыв/фото · поздравление с днём рождения.</p></div>
+  <div class="card"><div class="ct">👧 Данные детей</div><p>Основной контакт — родитель. Не просить телефон ребёнка, точную дату рождения, школу, класс с буквой, адрес и геолокацию без документированной необходимости.</p></div>
+  <div class="card"><div class="ct">📖 Подробнее</div><p>${crmLink('09-privacy-security.md','Полная спецификация приватности')} · ${crmLink('10-implementation-roadmap.md','Этап 0: безопасность')}</p></div>`;}
+
 /* ==================== ПОСТЫ / ФОРУМ / КОММЕНТ / ХУКИ / ЗАГОЛОВКИ ==================== */
 const postData={'e1_posts':e1_posts,'e3_posts':e3_posts};
 function drawPosts(section,data){
@@ -1375,6 +1422,7 @@ const renderMap={today:renderToday,fav:renderFav,search:renderSearch,home:render
   e1_idea:renderE1Idea,e1_reels:renderE1Reels,e1_posts:renderE1Posts,e1_comments:renderE1Comments,e1_hooks:renderE1Hooks,
   e2_idea:renderE2Idea,e2_reels:renderE2Reels,e2_proof:renderE2Proof,e2_conv:renderE2Conv,e2_direct:renderE2Direct,e2_funnel:renderE2Funnel,e2_postlead:renderE2PostLead,e2_price:renderE2Price,
   e3_idea:renderE3Idea,e3_reels:renderE3Reels,e3_posts:renderE3Posts,e3_forum:renderE3Forum,e3_nlp:renderE3Nlp,
+  crm_overview:renderCRMOverview,crm_today:renderCRMToday,crm_data:renderCRMData,crm_comms:renderCRMComms,crm_metrics:renderCRMMetrics,crm_privacy:renderCRMPrivacy,
   x_persona:renderXPersona,x_tone:renderXTone,x_pos:renderXPos,x_aud:renderXAud,x_kw:renderXKw,x_heads:renderXHeads,x_plan:renderXPlan,x_agents:renderXAgents,
   r_method:renderRMethod,r_legal:renderRLegal,r_data:renderData};
 /* секции, которые надо перерисовывать каждый раз (динамика) */

@@ -1,0 +1,35 @@
+{
+  "notice": "Synthetic example only. No real customer data.",
+  "family": {
+    "family_id": "11111111-1111-4111-8111-111111111111",
+    "display_name": "Семья Примеровых",
+    "lifecycle_stage": "trial",
+    "city": "Смоленск",
+    "timezone": "Europe/Moscow",
+    "acquisition_source": "leaflet_smolensk_2026",
+    "next_best_action": "Помочь выбрать текущую тему Spotlight 2"
+  },
+  "guardian": {
+    "guardian_id": "22222222-2222-4222-8222-222222222222",
+    "first_name": "Марина",
+    "email_normalized": "marina.synthetic@example.invalid",
+    "phone_e164": "+70000000000",
+    "preferred_channel": "whatsapp",
+    "marketing_email_status": "opted_in",
+    "marketing_messenger_status": "opted_in"
+  },
+  "student": {
+    "student_id": "33333333-3333-4333-8333-333333333333",
+    "first_name": "Аня",
+    "grade": 2,
+    "school_book": "Spotlight 2",
+    "current_module": "Module 1"
+  },
+  "current_trial": {
+    "status": "trial",
+    "campaign_key": "smolensk_2026",
+    "last_event": "activity_completed",
+    "next_message": "first_success"
+  }
+}
+
