@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://langust.online/schemas/client360-event-v2.json",
+  "title": "LANGUST Client 360 Event v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_name",
+    "occurred_at",
+    "source",
+    "environment",
+    "properties",
+    "schema_version"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]+$",
+      "maxLength": 100
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "received_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "tilda",
+        "website",
+        "cabinet",
+        "progressme",
+        "robokassa",
+        "email",
+        "telegram",
+        "max",
+        "whatsapp",
+        "phone",
+        "chatbot",
+        "ugc",
+        "manual",
+        "system"
+      ]
+    },
+    "environment": {
+      "type": "string",
+      "enum": ["production", "staging", "development", "test"]
+    },
+    "anonymous_id": {
+      "type": ["string", "null"],
+      "maxLength": 200
+    },
+    "family_id": {
+      "type": ["string", "null"],
+      "format": "uuid"
+    },
+    "guardian_id": {
+      "type": ["string", "null"],
+      "format": "uuid"
+    },
+    "student_id": {
+      "type": ["string", "null"],
+      "format": "uuid"
+    },
+    "session_id": {
+      "type": ["string", "null"],
+      "format": "uuid"
+    },
+    "request_id": {
+      "type": ["string", "null"],
+      "maxLength": 200
+    },
+    "idempotency_key": {
+      "type": ["string", "null"],
+      "maxLength": 300
+    },
+    "consent_state": {
+      "type": ["string", "null"],
+      "enum": ["essential_only", "analytics_allowed", "analytics_denied", "unknown", null]
+    },
+    "properties": {
+      "type": "object",
+      "maxProperties": 50,
+      "propertyNames": {
+        "allOf": [
+          {"pattern": "^[a-z][a-z0-9_]*$"},
+          {
+            "not": {
+              "enum": [
+                "email",
+                "phone",
+                "full_name",
+                "first_name",
+                "last_name",
+                "child_name",
+                "birth_date",
+                "birthday",
+                "password",
+                "token",
+                "api_key",
+                "card_number",
+                "cvv",
+                "raw_message",
+                "ip_address"
+              ]
+            }
+          }
+        ]
+      },
+      "description": "Event-specific allowlisted properties. Never include passwords, tokens, card data, raw communications or direct personal data."
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 2
+    }
+  },
+  "anyOf": [
+    {
+      "required": ["anonymous_id"],
+      "properties": {"anonymous_id": {"type": "string", "minLength": 1}}
+    },
+    {
+      "required": ["family_id"],
+      "properties": {"family_id": {"type": "string", "format": "uuid"}}
+    },
+    {
+      "required": ["guardian_id"],
+      "properties": {"guardian_id": {"type": "string", "format": "uuid"}}
+    },
+    {
+      "required": ["student_id"],
+      "properties": {"student_id": {"type": "string", "format": "uuid"}}
+    }
+  ]
+}

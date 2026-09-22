@@ -1,0 +1,328 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LANGUST lifecycle email program registry",
+  "schema_version": 1,
+  "default_timezone": "Europe/Moscow",
+  "default_quiet_hours": {
+    "start": "20:00",
+    "end": "09:00"
+  },
+  "default_marketing_caps": {
+    "per_family_24h": 1,
+    "per_family_7d": 3,
+    "all_marketing_channels_per_family_7d": 5
+  },
+  "global_stop_events": [
+    "identity_disputed",
+    "privacy_request_opened",
+    "spam_complaint_received"
+  ],
+  "programs": [
+    {
+      "program_key": "lead_ack",
+      "stage": "lead",
+      "message_class": "service_requested",
+      "entry_event": "lead_created",
+      "required_purpose": "lead_response",
+      "eligibility": ["valid_contact", "lead_not_invalid"],
+      "steps": [
+        {"step_key": "received", "delay": "PT0M", "template_role": "lead_received"}
+      ],
+      "stop_events": ["lead_invalid", "explicit_no"],
+      "success_event": "lead_ack_delivered",
+      "primary_kpi": "delivery_rate"
+    },
+    {
+      "program_key": "trial_access",
+      "stage": "trial",
+      "message_class": "service_requested",
+      "entry_event": "trial_created",
+      "required_purpose": "trial_delivery",
+      "eligibility": ["trial_active", "access_credentials_ready"],
+      "steps": [
+        {"step_key": "access", "delay": "PT0M", "template_role": "trial_access"},
+        {"step_key": "access_help", "delay": "PT2H", "template_role": "trial_access_help"}
+      ],
+      "stop_events": ["first_login", "access_revoked", "explicit_no", "support_case_opened"],
+      "success_event": "first_login",
+      "primary_kpi": "first_login_rate"
+    },
+    {
+      "program_key": "trial_no_login",
+      "stage": "trial",
+      "message_class": "service_requested",
+      "entry_event": "trial_created",
+      "required_purpose": "trial_delivery",
+      "eligibility": ["trial_active", "no_first_login"],
+      "steps": [
+        {"step_key": "barrier_check", "delay": "PT12H", "template_role": "login_barrier"},
+        {"step_key": "human_help", "delay": "P1D", "template_role": "human_login_help"}
+      ],
+      "stop_events": ["first_login", "payment_succeeded", "explicit_no", "support_case_opened"],
+      "success_event": "first_login",
+      "primary_kpi": "incremental_first_login"
+    },
+    {
+      "program_key": "trial_first_value",
+      "stage": "trial",
+      "message_class": "service_requested",
+      "entry_event": "first_login",
+      "required_purpose": "trial_delivery",
+      "eligibility": ["trial_active", "no_first_value"],
+      "steps": [
+        {"step_key": "one_action", "delay": "PT1H", "template_role": "first_value_one_action"},
+        {"step_key": "example", "delay": "PT12H", "template_role": "first_value_example"}
+      ],
+      "stop_events": ["first_value", "trial_expired", "explicit_no", "support_case_opened"],
+      "success_event": "first_value",
+      "primary_kpi": "first_value_rate"
+    },
+    {
+      "program_key": "trial_repeat_use",
+      "stage": "trial",
+      "message_class": "service_requested",
+      "entry_event": "first_value",
+      "required_purpose": "trial_delivery",
+      "eligibility": ["trial_active", "no_second_session"],
+      "steps": [
+        {"step_key": "return", "delay": "P1D", "template_role": "second_session"}
+      ],
+      "stop_events": ["second_session_started", "payment_succeeded", "trial_expired", "explicit_no"],
+      "success_event": "second_session_started",
+      "primary_kpi": "repeat_use_rate"
+    },
+    {
+      "program_key": "trial_value_summary",
+      "stage": "trial",
+      "message_class": "marketing_lifecycle",
+      "entry_event": "first_value",
+      "required_purpose": "email_marketing",
+      "eligibility": ["verified_result_exists", "marketing_allowed"],
+      "steps": [
+        {"step_key": "result", "delay": "PT2H", "template_role": "trial_result_summary"},
+        {"step_key": "continuation", "delay": "P1D", "template_role": "trial_continuation"}
+      ],
+      "stop_events": ["payment_succeeded", "explicit_no", "unsubscribe_requested", "refund_requested"],
+      "success_event": "checkout_started",
+      "primary_kpi": "incremental_checkout_rate"
+    },
+    {
+      "program_key": "checkout_recovery",
+      "stage": "checkout",
+      "message_class": "marketing_lifecycle",
+      "entry_event": "checkout_started",
+      "required_purpose": "email_marketing",
+      "eligibility": ["no_payment_success", "offer_active", "marketing_allowed"],
+      "steps": [
+        {"step_key": "technical_help", "delay": "PT2H", "template_role": "checkout_help"},
+        {"step_key": "clarity", "delay": "P1D", "template_role": "offer_clarity"}
+      ],
+      "stop_events": ["payment_succeeded", "explicit_no", "support_case_opened", "refund_requested", "offer_expired"],
+      "success_event": "payment_succeeded",
+      "primary_kpi": "incremental_payment_rate"
+    },
+    {
+      "program_key": "trial_closed_feedback",
+      "stage": "trial_closed",
+      "message_class": "marketing_lifecycle",
+      "entry_event": "trial_expired",
+      "required_purpose": "email_marketing",
+      "eligibility": ["no_payment_success", "marketing_allowed"],
+      "steps": [
+        {"step_key": "one_question", "delay": "P1D", "template_role": "trial_feedback"}
+      ],
+      "stop_events": ["feedback_received", "payment_succeeded", "explicit_no", "unsubscribe_requested"],
+      "success_event": "feedback_received",
+      "primary_kpi": "feedback_response_rate"
+    },
+    {
+      "program_key": "buyer_welcome",
+      "stage": "customer",
+      "message_class": "service_contract",
+      "entry_event": "payment_succeeded",
+      "required_purpose": "service_delivery",
+      "eligibility": ["entitlement_active_or_pending"],
+      "steps": [
+        {"step_key": "confirmation", "delay": "PT0M", "template_role": "payment_access_confirmation"},
+        {"step_key": "first_paid_step", "delay": "PT2H", "template_role": "first_paid_step"}
+      ],
+      "stop_events": ["first_paid_session", "refund_requested", "support_case_opened"],
+      "success_event": "first_paid_session",
+      "primary_kpi": "first_paid_session_rate"
+    },
+    {
+      "program_key": "week_one_habit",
+      "stage": "customer",
+      "message_class": "learning_report",
+      "entry_event": "entitlement_activated",
+      "required_purpose": "parent_reporting",
+      "eligibility": ["reporting_allowed", "not_paused"],
+      "steps": [
+        {"step_key": "day_2", "delay": "P2D", "template_role": "week_one_nudge"},
+        {"step_key": "day_5", "delay": "P5D", "template_role": "week_one_progress"},
+        {"step_key": "day_7", "delay": "P7D", "template_role": "week_one_summary"}
+      ],
+      "stop_events": ["habit_milestone", "access_paused", "refund_requested", "explicit_no"],
+      "success_event": "habit_milestone",
+      "primary_kpi": "week_one_retention"
+    },
+    {
+      "program_key": "learning_nudge",
+      "stage": "customer",
+      "message_class": "marketing_lifecycle",
+      "entry_event": "inactivity_threshold_reached",
+      "required_purpose": "email_marketing",
+      "eligibility": ["entitlement_active", "marketing_allowed", "not_paused"],
+      "steps": [
+        {"step_key": "help_return", "delay": "PT0M", "template_role": "learning_return"},
+        {"step_key": "one_small_step", "delay": "P3D", "template_role": "small_learning_step"}
+      ],
+      "stop_events": ["learning_resumed", "access_paused", "support_case_opened", "explicit_no", "unsubscribe_requested"],
+      "success_event": "learning_resumed",
+      "primary_kpi": "incremental_reactivation"
+    },
+    {
+      "program_key": "weekly_parent_report",
+      "stage": "customer",
+      "message_class": "learning_report",
+      "entry_event": "weekly_report_due",
+      "required_purpose": "parent_reporting",
+      "eligibility": ["reporting_allowed", "verified_progress_exists"],
+      "steps": [
+        {"step_key": "weekly", "delay": "PT0M", "template_role": "weekly_parent_report"}
+      ],
+      "stop_events": ["reporting_preference_off", "access_ended"],
+      "success_event": "report_viewed",
+      "primary_kpi": "report_view_rate"
+    },
+    {
+      "program_key": "milestone_celebration",
+      "stage": "customer",
+      "message_class": "relationship",
+      "entry_event": "progress_milestone_reached",
+      "required_purpose": "parent_reporting",
+      "eligibility": ["milestone_verified", "relationship_cap_available"],
+      "steps": [
+        {"step_key": "celebrate", "delay": "PT1H", "template_role": "milestone_celebration"}
+      ],
+      "stop_events": ["open_critical_case", "reporting_preference_off"],
+      "success_event": "milestone_message_delivered",
+      "primary_kpi": "negative_feedback_rate"
+    },
+    {
+      "program_key": "renewal_preview",
+      "stage": "renewal",
+      "message_class": "service_contract",
+      "entry_event": "renewal_window_opened",
+      "required_purpose": "service_delivery",
+      "eligibility": ["entitlement_active", "renewal_choice_needed"],
+      "steps": [
+        {"step_key": "preview", "delay": "PT0M", "template_role": "renewal_preview"},
+        {"step_key": "choice", "delay": "P5D", "template_role": "renewal_choice"}
+      ],
+      "stop_events": ["renewal_succeeded", "renewal_cancelled", "refund_requested", "support_case_opened"],
+      "success_event": "renewal_decision_recorded",
+      "primary_kpi": "renewal_decision_rate"
+    },
+    {
+      "program_key": "payment_failed_recovery",
+      "stage": "billing",
+      "message_class": "service_contract",
+      "entry_event": "payment_failed",
+      "required_purpose": "billing",
+      "eligibility": ["safe_failure_code", "invoice_open"],
+      "steps": [
+        {"step_key": "status", "delay": "PT0M", "template_role": "payment_failed_status"},
+        {"step_key": "help", "delay": "P1D", "template_role": "payment_help"}
+      ],
+      "stop_events": ["payment_succeeded", "invoice_cancelled", "refund_requested", "support_case_opened"],
+      "success_event": "payment_succeeded",
+      "primary_kpi": "failed_payment_recovery"
+    },
+    {
+      "program_key": "refund_status",
+      "stage": "refund",
+      "message_class": "transactional_critical",
+      "entry_event": "refund_status_changed",
+      "required_purpose": "billing",
+      "eligibility": ["refund_exists", "verified_recipient"],
+      "steps": [
+        {"step_key": "status", "delay": "PT0M", "template_role": "refund_status"}
+      ],
+      "stop_events": ["identity_disputed"],
+      "success_event": "refund_status_delivered",
+      "primary_kpi": "delivery_rate"
+    },
+    {
+      "program_key": "birthday_guardian",
+      "stage": "relationship",
+      "message_class": "relationship",
+      "entry_event": "guardian_birthday_due",
+      "required_purpose": "birthday",
+      "eligibility": ["birthday_preference_allowed", "date_precision_sufficient", "no_open_critical_case"],
+      "steps": [
+        {"step_key": "greeting", "delay": "PT0M", "template_role": "guardian_birthday_noncommercial"}
+      ],
+      "stop_events": ["birthday_preference_off", "open_critical_case"],
+      "success_event": "birthday_message_delivered",
+      "primary_kpi": "negative_feedback_rate"
+    },
+    {
+      "program_key": "birthday_student_to_guardian",
+      "stage": "relationship",
+      "message_class": "relationship",
+      "entry_event": "student_birthday_due",
+      "required_purpose": "birthday",
+      "eligibility": ["guardian_is_recipient", "birthday_preference_allowed", "date_precision_sufficient"],
+      "steps": [
+        {"step_key": "greeting", "delay": "PT0M", "template_role": "student_birthday_to_guardian"}
+      ],
+      "stop_events": ["birthday_preference_off", "open_critical_case"],
+      "success_event": "birthday_message_delivered",
+      "primary_kpi": "wrong_recipient_count"
+    },
+    {
+      "program_key": "review_request",
+      "stage": "advocacy",
+      "message_class": "marketing_lifecycle",
+      "entry_event": "verified_success_window_opened",
+      "required_purpose": "email_marketing",
+      "eligibility": ["verified_success_exists", "marketing_allowed", "no_open_case", "not_recently_asked"],
+      "steps": [
+        {"step_key": "ask", "delay": "PT0M", "template_role": "honest_review_request"}
+      ],
+      "stop_events": ["review_submitted", "review_declined", "support_case_opened", "unsubscribe_requested"],
+      "success_event": "review_submitted",
+      "primary_kpi": "review_response_rate"
+    },
+    {
+      "program_key": "referral_invite",
+      "stage": "advocacy",
+      "message_class": "marketing_lifecycle",
+      "entry_event": "referral_eligibility_opened",
+      "required_purpose": "email_marketing",
+      "eligibility": ["marketing_allowed", "no_open_case", "not_recently_asked"],
+      "steps": [
+        {"step_key": "invite", "delay": "PT0M", "template_role": "referral_invite"}
+      ],
+      "stop_events": ["referral_shared", "referral_declined", "support_case_opened", "unsubscribe_requested"],
+      "success_event": "referral_shared",
+      "primary_kpi": "incremental_referrals"
+    },
+    {
+      "program_key": "winback",
+      "stage": "churned",
+      "message_class": "marketing_lifecycle",
+      "entry_event": "winback_window_opened",
+      "required_purpose": "email_marketing",
+      "eligibility": ["marketing_allowed", "relevant_offer_exists", "no_open_case", "cooldown_complete"],
+      "steps": [
+        {"step_key": "relevance", "delay": "PT0M", "template_role": "winback_relevance"},
+        {"step_key": "last_touch", "delay": "P7D", "template_role": "winback_last_touch"}
+      ],
+      "stop_events": ["payment_succeeded", "explicit_no", "unsubscribe_requested", "support_case_opened"],
+      "success_event": "payment_succeeded",
+      "primary_kpi": "incremental_winback_rate"
+    }
+  ]
+}

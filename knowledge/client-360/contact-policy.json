@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LANGUST cross-channel contact policy",
+  "schema_version": 1,
+  "policy_version": "2026-09-22.1",
+  "default_timezone": "Europe/Moscow",
+  "priorities": [
+    {"key": "P0", "rank": 0, "category": "privacy_security"},
+    {"key": "P1", "rank": 1, "category": "critical_service"},
+    {"key": "P2", "rank": 2, "category": "support_and_promises"},
+    {"key": "P3", "rank": 3, "category": "active_product"},
+    {"key": "P4", "rank": 4, "category": "relationship_and_reports"},
+    {"key": "P5", "rank": 5, "category": "marketing"}
+  ],
+  "quiet_hours": {
+    "marketing": {"start": "20:00", "end": "09:00"},
+    "relationship": {"start": "20:00", "end": "09:00"},
+    "phone": {"start": "19:00", "end": "10:00"},
+    "service_noncritical": {"start": "21:00", "end": "08:00"}
+  },
+  "frequency_caps": {
+    "marketing_per_family_24h": 1,
+    "marketing_per_family_7d": 3,
+    "all_marketing_channels_per_family_7d": 5,
+    "same_topic_cooldown_hours": 72,
+    "post_reply_automation_pause_hours": 24
+  },
+  "suppression_levels": [
+    "global",
+    "provider",
+    "channel",
+    "purpose",
+    "family",
+    "guardian",
+    "contact_point",
+    "topic",
+    "program",
+    "campaign",
+    "template",
+    "candidate"
+  ],
+  "decision_order": [
+    "identity_exists_and_is_not_disputed",
+    "candidate_not_expired",
+    "stop_event_not_reached",
+    "message_class_valid",
+    "purpose_or_service_basis_valid",
+    "no_global_or_scoped_suppression",
+    "contact_point_active_and_verified_as_required",
+    "no_hard_bounce_or_complaint",
+    "no_conversation_lock",
+    "no_conflicting_critical_case",
+    "frequency_caps_available",
+    "quiet_hours_satisfied",
+    "higher_priority_collision_resolved",
+    "offer_and_template_versions_active",
+    "dedupe_key_not_used"
+  ],
+  "decision_codes": [
+    "allow_now",
+    "schedule_for_window",
+    "switch_channel",
+    "merge_with_higher_priority",
+    "pause_for_human_reply",
+    "suppress_missing_consent",
+    "suppress_opt_out",
+    "suppress_invalid_destination",
+    "suppress_frequency_cap",
+    "suppress_open_case",
+    "suppress_stop_event",
+    "suppress_duplicate",
+    "manual_review",
+    "cancel_expired"
+  ],
+  "global_stop_events": [
+    "identity_disputed",
+    "privacy_request_opened",
+    "spam_complaint_received",
+    "contact_point_hard_bounced"
+  ],
+  "topic_stop_events": [
+    "reply_received",
+    "explicit_no",
+    "support_case_opened",
+    "refund_requested",
+    "payment_succeeded",
+    "first_login",
+    "first_value",
+    "access_paused"
+  ],
+  "channel_rules": {
+    "email": {
+      "marketing_requires": ["email_marketing_allowed", "deliverable_contact"],
+      "fallback_on": ["hard_bounce", "provider_rejected"],
+      "fallback_not_on": ["not_opened", "not_clicked"]
+    },
+    "telegram": {
+      "marketing_requires": ["messenger_marketing_allowed", "verified_channel_identity"],
+      "direct_child_marketing": false
+    },
+    "max": {
+      "marketing_requires": ["messenger_marketing_allowed", "verified_channel_identity"],
+      "direct_child_marketing": false
+    },
+    "whatsapp": {
+      "marketing_requires": ["messenger_marketing_allowed", "approved_integration"],
+      "number_presence_is_not_consent": true
+    },
+    "phone": {
+      "requires": ["do_not_call_false", "allowed_contact_window"],
+      "recording_by_default": false
+    },
+    "in_app": {
+      "requires": ["authenticated_recipient", "message_relevant_to_account"]
+    }
+  },
+  "conversation_lock": {
+    "enabled": true,
+    "trigger_events": ["reply_received", "inbound_message_received", "support_case_opened"],
+    "scope": "family_and_topic",
+    "release_events": ["conversation_resolved", "customer_confirmed", "manual_release"],
+    "default_timeout_hours": 48
+  },
+  "child_rules": {
+    "commercial_message_direct_to_child": false,
+    "default_recipient": "verified_guardian",
+    "birthday_message_recipient": "verified_guardian",
+    "public_progress_data_allowed": false,
+    "ugc_requires_separate_permissions": true
+  },
+  "manual_review_required": [
+    "identity_conflict",
+    "disputed_consent",
+    "nonstandard_refund",
+    "critical_complaint",
+    "sensitive_child_data",
+    "post_incident_message",
+    "mass_campaign",
+    "ai_generated_material_claim",
+    "manual_offer_exception"
+  ],
+  "dedupe_key_components": [
+    "family_id",
+    "purpose",
+    "business_object_type",
+    "business_object_id",
+    "program_step",
+    "policy_version",
+    "time_bucket"
+  ],
+  "audit_required": [
+    "candidate_created",
+    "decision_made",
+    "manual_override",
+    "channel_switched",
+    "candidate_suppressed",
+    "message_queued",
+    "message_cancelled",
+    "message_sent"
+  ]
+}

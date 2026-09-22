@@ -1,0 +1,407 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LANGUST Client 360 data purpose and retention register",
+  "schema_version": 1,
+  "status": "proposed_for_legal_and_security_review",
+  "rules": {
+    "collect_only_with_documented_purpose": true,
+    "separate_child_data": true,
+    "separate_marketing_consents_by_channel": true,
+    "never_store_secrets_in_client360": true,
+    "never_publish_production_data_to_github": true,
+    "retention_durations_require_legal_approval": true
+  },
+  "retention_classes": [
+    {
+      "key": "R0_EPHEMERAL",
+      "description": "Одноразовые коды, временные payloads и диагностические данные",
+      "duration_status": "to_be_approved",
+      "expiration_action": "delete"
+    },
+    {
+      "key": "R1_SHORT",
+      "description": "Сырые web-события, технические попытки и краткоживущие логи",
+      "duration_status": "to_be_approved",
+      "expiration_action": "delete_or_aggregate"
+    },
+    {
+      "key": "R2_ACTIVE_RELATIONSHIP",
+      "description": "Данные активной заявки, пробника, обучения и поддержки",
+      "duration_status": "relationship_plus_approved_buffer",
+      "expiration_action": "review_then_delete_or_anonymize"
+    },
+    {
+      "key": "R3_CONTRACT_TERM",
+      "description": "Данные исполнения услуги и претензионного периода",
+      "duration_status": "to_be_approved",
+      "expiration_action": "review_then_delete_or_restrict"
+    },
+    {
+      "key": "R4_LEGAL_ACCOUNTING",
+      "description": "Данные, подлежащие обязательному финансовому или правовому хранению",
+      "duration_status": "legal_review_required",
+      "expiration_action": "retain_restricted_then_delete"
+    },
+    {
+      "key": "R5_CONSENT_PROOF",
+      "description": "Доказательства согласий, отказов и версии уведомлений",
+      "duration_status": "legal_review_required",
+      "expiration_action": "retain_restricted_then_delete"
+    },
+    {
+      "key": "R6_AGGREGATE",
+      "description": "Необратимо обезличенная статистика",
+      "duration_status": "business_review",
+      "expiration_action": "retain_if_truly_anonymous"
+    },
+    {
+      "key": "R7_UNTIL_WITHDRAWAL_OR_EXPIRY",
+      "description": "Отзываемые разрешения на поздравления, отзывы и UGC",
+      "duration_status": "until_withdrawal_or_explicit_expiry",
+      "expiration_action": "stop_use_and_remove"
+    }
+  ],
+  "purposes": [
+    {
+      "key": "lead_response",
+      "description": "Ответ на конкретную заявку или вопрос",
+      "marketing_reuse": false
+    },
+    {
+      "key": "trial_delivery",
+      "description": "Создание и сопровождение запрошенного пробного доступа",
+      "marketing_reuse": false
+    },
+    {
+      "key": "service_delivery",
+      "description": "Исполнение и сопровождение оплаченной услуги",
+      "marketing_reuse": false
+    },
+    {
+      "key": "billing",
+      "description": "Заказы, оплаты, возвраты, доступ и финансовая сверка",
+      "marketing_reuse": false
+    },
+    {
+      "key": "support",
+      "description": "Решение обращения и выполнение обещаний",
+      "marketing_reuse": false
+    },
+    {
+      "key": "learning_progress",
+      "description": "Обучение, прогресс и улучшение образовательного продукта",
+      "marketing_reuse": false
+    },
+    {
+      "key": "parent_reporting",
+      "description": "Заказанные родителем отчёты и учебные уведомления",
+      "marketing_reuse": false
+    },
+    {
+      "key": "email_marketing",
+      "description": "Разрешённые email-программы и предложения",
+      "marketing_reuse": true
+    },
+    {
+      "key": "messenger_marketing",
+      "description": "Разрешённые маркетинговые сообщения в мессенджере",
+      "marketing_reuse": true
+    },
+    {
+      "key": "analytics_first_party",
+      "description": "Псевдонимизированная аналитика сайта, воронки и продукта",
+      "marketing_reuse": false
+    },
+    {
+      "key": "birthday",
+      "description": "Добровольные поздравления по отдельной настройке",
+      "marketing_reuse": false
+    },
+    {
+      "key": "testimonial",
+      "description": "Разрешённое использование отзыва в согласованном scope",
+      "marketing_reuse": false
+    },
+    {
+      "key": "ugc_publication",
+      "description": "Публикация конкретного UGC-материала на конкретных площадках",
+      "marketing_reuse": false
+    },
+    {
+      "key": "fraud_security",
+      "description": "Защита аккаунта, платежей и инфраструктуры",
+      "marketing_reuse": false
+    },
+    {
+      "key": "legal_accounting",
+      "description": "Обязательный правовой и финансовый учёт",
+      "marketing_reuse": false
+    }
+  ],
+  "field_groups": [
+    {
+      "entity": "families",
+      "fields": ["family_id", "lifecycle_stage", "timezone", "preferred_language"],
+      "data_class": "operational",
+      "subject_type": "family",
+      "purposes": ["lead_response", "trial_delivery", "service_delivery", "support"],
+      "requirement": "must",
+      "source_of_truth": "client360",
+      "retention_class": "R2_ACTIVE_RELATIONSHIP",
+      "access_roles": ["owner", "operations", "support"],
+      "deletion_action": "delete_or_anonymize"
+    },
+    {
+      "entity": "guardians",
+      "fields": ["first_name", "last_name", "relationship_to_student"],
+      "data_class": "personal",
+      "subject_type": "guardian",
+      "purposes": ["lead_response", "trial_delivery", "service_delivery", "billing", "support"],
+      "requirement": "should",
+      "source_of_truth": "client360",
+      "retention_class": "R2_ACTIVE_RELATIONSHIP",
+      "access_roles": ["owner", "operations", "support", "finance_limited"],
+      "deletion_action": "delete_or_retain_restricted"
+    },
+    {
+      "entity": "contact_points",
+      "fields": ["value_encrypted", "normalized_hash", "masked_value", "contact_type"],
+      "data_class": "personal",
+      "subject_type": "guardian",
+      "purposes": ["lead_response", "trial_delivery", "service_delivery", "billing", "support", "email_marketing", "messenger_marketing"],
+      "requirement": "must_for_contact",
+      "source_of_truth": "client360",
+      "retention_class": "R2_ACTIVE_RELATIONSHIP",
+      "access_roles": ["owner", "operations_masked", "support_masked", "system"],
+      "deletion_action": "delete_or_hash_for_suppression"
+    },
+    {
+      "entity": "contact_point_verifications",
+      "fields": ["method", "status", "completed_at", "proof_reference"],
+      "data_class": "authentication",
+      "subject_type": "guardian",
+      "purposes": ["fraud_security", "service_delivery"],
+      "requirement": "must_when_verified",
+      "source_of_truth": "client360",
+      "retention_class": "R3_CONTRACT_TERM",
+      "access_roles": ["system", "technical_limited", "privacy"],
+      "deletion_action": "delete_or_retain_restricted"
+    },
+    {
+      "entity": "students",
+      "fields": ["first_name", "grade", "school_book", "current_module"],
+      "data_class": "child_personal",
+      "subject_type": "student",
+      "purposes": ["trial_delivery", "service_delivery", "learning_progress", "parent_reporting"],
+      "requirement": "minimum_needed",
+      "source_of_truth": "client360_and_learning_platform",
+      "retention_class": "R2_ACTIVE_RELATIONSHIP",
+      "access_roles": ["owner", "operations_limited", "support_limited", "learning"],
+      "deletion_action": "delete_or_anonymize"
+    },
+    {
+      "entity": "students",
+      "fields": ["birth_year", "birthday_month_day"],
+      "data_class": "child_personal_restricted",
+      "subject_type": "student",
+      "purposes": ["service_delivery", "birthday"],
+      "requirement": "optional",
+      "source_of_truth": "guardian_statement",
+      "retention_class": "R7_UNTIL_WITHDRAWAL_OR_EXPIRY",
+      "access_roles": ["owner", "system", "privacy"],
+      "deletion_action": "delete"
+    },
+    {
+      "entity": "customer_dates",
+      "fields": ["date_value", "month_day", "year_value", "precision", "purpose"],
+      "data_class": "personal_or_child_personal",
+      "subject_type": "guardian_or_student",
+      "purposes": ["birthday", "service_delivery", "billing", "support", "parent_reporting"],
+      "requirement": "purpose_specific",
+      "source_of_truth": "client360",
+      "retention_class": "R7_UNTIL_WITHDRAWAL_OR_EXPIRY",
+      "access_roles": ["owner", "operations_limited", "system", "privacy"],
+      "deletion_action": "delete_or_anonymize"
+    },
+    {
+      "entity": "consents",
+      "fields": ["purpose", "status", "captured_at", "notice_version", "proof_reference"],
+      "data_class": "personal_restricted",
+      "subject_type": "guardian_or_student",
+      "purposes": ["legal_accounting", "fraud_security"],
+      "requirement": "must",
+      "source_of_truth": "client360_append_only",
+      "retention_class": "R5_CONSENT_PROOF",
+      "access_roles": ["owner", "privacy", "system", "operations_status_only"],
+      "deletion_action": "retain_restricted_then_delete"
+    },
+    {
+      "entity": "leads",
+      "fields": ["submitted_at", "form_id", "landing_url", "utm_source", "utm_medium", "utm_campaign", "promo_code"],
+      "data_class": "operational_personal_linked",
+      "subject_type": "family",
+      "purposes": ["lead_response", "trial_delivery", "analytics_first_party"],
+      "requirement": "must_or_should",
+      "source_of_truth": "website_or_tilda_then_client360",
+      "retention_class": "R2_ACTIVE_RELATIONSHIP",
+      "access_roles": ["owner", "operations", "marketing_aggregated", "analytics_pseudonymous"],
+      "deletion_action": "delete_or_anonymize"
+    },
+    {
+      "entity": "leads",
+      "fields": ["comment_original"],
+      "data_class": "communications_restricted",
+      "subject_type": "guardian",
+      "purposes": ["lead_response", "support"],
+      "requirement": "optional",
+      "source_of_truth": "form_submission",
+      "retention_class": "R1_SHORT",
+      "access_roles": ["owner", "operations", "support"],
+      "deletion_action": "delete_after_structured_summary"
+    },
+    {
+      "entity": "interactions",
+      "fields": ["channel", "direction", "interaction_type", "summary", "outcome", "external_message_id"],
+      "data_class": "communications",
+      "subject_type": "family",
+      "purposes": ["lead_response", "trial_delivery", "service_delivery", "support", "billing"],
+      "requirement": "must_for_contact_history",
+      "source_of_truth": "client360_normalized",
+      "retention_class": "R2_ACTIVE_RELATIONSHIP",
+      "access_roles": ["owner", "operations", "support", "finance_limited"],
+      "deletion_action": "delete_or_retain_restricted"
+    },
+    {
+      "entity": "journal_entries",
+      "fields": ["journal_type", "entry_type", "summary", "structured_data", "source_reference"],
+      "data_class": "communications_or_restricted",
+      "subject_type": "family",
+      "purposes": ["support", "service_delivery", "learning_progress", "billing"],
+      "requirement": "purpose_specific",
+      "source_of_truth": "client360",
+      "retention_class": "R2_ACTIVE_RELATIONSHIP",
+      "access_roles": ["role_scoped_by_visibility"],
+      "deletion_action": "delete_or_retain_restricted"
+    },
+    {
+      "entity": "events",
+      "fields": ["event_name", "occurred_at", "source", "anonymous_id", "family_id", "properties"],
+      "data_class": "pseudonymous_or_personal_linked",
+      "subject_type": "visitor_or_family",
+      "purposes": ["analytics_first_party", "trial_delivery", "service_delivery", "learning_progress", "fraud_security"],
+      "requirement": "event_specific",
+      "source_of_truth": "event_store",
+      "retention_class": "R1_SHORT",
+      "access_roles": ["system", "technical", "analytics_pseudonymous"],
+      "deletion_action": "delete_or_aggregate"
+    },
+    {
+      "entity": "web_sessions",
+      "fields": ["anonymous_id", "family_id", "engaged_seconds", "pages_viewed", "landing_url", "utm_source", "utm_campaign"],
+      "data_class": "pseudonymous_or_personal_linked",
+      "subject_type": "visitor_or_family",
+      "purposes": ["analytics_first_party"],
+      "requirement": "optional_by_consent_mode",
+      "source_of_truth": "first_party_analytics",
+      "retention_class": "R1_SHORT",
+      "access_roles": ["system", "analytics_pseudonymous"],
+      "deletion_action": "delete_or_aggregate"
+    },
+    {
+      "entity": "enrollments",
+      "fields": ["student_id", "course_id", "status", "access_started_at", "access_ends_at"],
+      "data_class": "child_personal_operational",
+      "subject_type": "student",
+      "purposes": ["trial_delivery", "service_delivery", "learning_progress", "parent_reporting"],
+      "requirement": "must",
+      "source_of_truth": "client360_and_learning_platform",
+      "retention_class": "R3_CONTRACT_TERM",
+      "access_roles": ["owner", "operations", "support", "learning", "analytics_pseudonymous"],
+      "deletion_action": "delete_or_retain_restricted"
+    },
+    {
+      "entity": "learning_events",
+      "fields": ["module", "activity", "result", "active_seconds", "milestone"],
+      "data_class": "child_personal_learning",
+      "subject_type": "student",
+      "purposes": ["learning_progress", "parent_reporting", "service_delivery"],
+      "requirement": "minimum_needed",
+      "source_of_truth": "learning_platform",
+      "retention_class": "R2_ACTIVE_RELATIONSHIP",
+      "access_roles": ["learning", "support_limited", "parent_authorized", "analytics_pseudonymous"],
+      "deletion_action": "delete_or_aggregate"
+    },
+    {
+      "entity": "customer_orders_and_invoices",
+      "fields": ["product", "tariff", "price", "discount", "period", "status", "terms_version"],
+      "data_class": "financial",
+      "subject_type": "family",
+      "purposes": ["billing", "service_delivery", "legal_accounting"],
+      "requirement": "must",
+      "source_of_truth": "client360_finance",
+      "retention_class": "R4_LEGAL_ACCOUNTING",
+      "access_roles": ["owner", "finance", "operations_limited", "support_limited"],
+      "deletion_action": "retain_restricted_then_delete"
+    },
+    {
+      "entity": "payments_and_refunds",
+      "fields": ["amount", "currency", "status", "provider_reference", "paid_at", "refunded_at", "reason_category"],
+      "data_class": "financial_restricted",
+      "subject_type": "family",
+      "purposes": ["billing", "service_delivery", "legal_accounting", "fraud_security"],
+      "requirement": "must",
+      "source_of_truth": "payment_provider_then_client360_ledger",
+      "retention_class": "R4_LEGAL_ACCOUNTING",
+      "access_roles": ["owner", "finance", "support_status_only", "system"],
+      "deletion_action": "retain_restricted_then_delete"
+    },
+    {
+      "entity": "message_deliveries",
+      "fields": ["campaign_id", "family_id", "channel", "destination_hash", "template_version", "status", "provider_message_id"],
+      "data_class": "communications_metadata",
+      "subject_type": "guardian",
+      "purposes": ["lead_response", "trial_delivery", "service_delivery", "billing", "email_marketing", "messenger_marketing"],
+      "requirement": "must_for_delivery_audit",
+      "source_of_truth": "provider_then_client360",
+      "retention_class": "R3_CONTRACT_TERM",
+      "access_roles": ["owner", "operations", "support", "marketing_aggregated", "system"],
+      "deletion_action": "delete_or_retain_restricted"
+    },
+    {
+      "entity": "customer_questions",
+      "fields": ["question_topic", "safe_summary", "status", "answer_reference"],
+      "data_class": "communications",
+      "subject_type": "family",
+      "purposes": ["support", "service_delivery", "analytics_first_party"],
+      "requirement": "must_when_question_exists",
+      "source_of_truth": "client360_normalized",
+      "retention_class": "R2_ACTIVE_RELATIONSHIP",
+      "access_roles": ["owner", "operations", "support", "analytics_aggregated"],
+      "deletion_action": "delete_or_anonymize"
+    },
+    {
+      "entity": "ugc_assets_and_permissions",
+      "fields": ["asset_reference", "subject", "platform_scope", "face", "voice", "name", "editing", "paid_ads", "expiry"],
+      "data_class": "child_personal_highly_restricted",
+      "subject_type": "student",
+      "purposes": ["ugc_publication", "testimonial"],
+      "requirement": "explicit_permission_per_scope",
+      "source_of_truth": "ugc_permission_registry",
+      "retention_class": "R7_UNTIL_WITHDRAWAL_OR_EXPIRY",
+      "access_roles": ["owner", "ugc_editor_limited", "privacy"],
+      "deletion_action": "stop_use_remove_and_delete"
+    },
+    {
+      "entity": "secrets",
+      "fields": ["passwords", "bot_tokens", "api_keys", "oauth_refresh_tokens", "payment_credentials"],
+      "data_class": "secret",
+      "subject_type": "not_client360_data",
+      "purposes": ["fraud_security"],
+      "requirement": "prohibited_in_client360",
+      "source_of_truth": "secret_manager_only",
+      "retention_class": "R0_EPHEMERAL",
+      "access_roles": ["technical_named_roles"],
+      "deletion_action": "rotate_and_revoke"
+    }
+  ]
+}
