@@ -142,6 +142,9 @@ function discoveryRenderPlan() {
 function discoveryRenderResearch() {
   document.getElementById('discover-panel').innerHTML=`<div class="discover-report">
     <p class="discover-intro">Задача: привлечь мам младших школьников через интерес к миру и укрепить доверие к тому, как Татьяна объясняет. Ядро LANGUST — школьный английский по Spotlight.</p>
+    <h2>Школы мира: языки и математика</h2>
+    <p>Серия «А как учатся дети в других странах?». Сравниваем конкретные программы и возраст, различаем национальные требования и отдельные примеры уроков. Из этих различий нельзя составить рейтинг «где дети умнее».</p>
+    ${DISCOVERY.schools.map(s=>`<section class="card discover-school"><h3>${discoveryEscape(s.country)}</h3><p><strong>Языки.</strong> ${discoveryEscape(s.languages)}</p><p><strong>Математика.</strong> ${discoveryEscape(s.math)}</p><ul>${s.sources.map(key=>{const source=DISCOVERY.sources[key];return `<li><a href="${discoveryEscape(source.url)}" target="_blank" rel="noopener noreferrer">${discoveryEscape(source.label)} ↗</a></li>`;}).join('')}</ul><button type="button" class="btn btn-sm" data-school-reel="${discoveryEscape(s.reel)}">Открыть сценарий →</button></section>`).join('')}
     <h2>Шесть смежных направлений</h2>
     <div class="discover-category-grid">${DISCOVERY.categories.map(c=>`<div class="discover-category-box"><small>${discoveryEscape(c.priority)}</small><h3>${discoveryEscape(c.label)}</h3><p>${discoveryEscape(c.purpose)}</p></div>`).join('')}</div>
     <h2>Что показали открытые данные</h2>
@@ -155,4 +158,5 @@ function discoveryRenderResearch() {
     <h2>Редакционные ориентиры</h2><ul><li>Факт, вывод из исследования и предложение попробовать дома называем отдельно.</li><li>Для исследований указываем возраст и задачу; не придумываем универсальные интервалы и проценты.</li><li>Без обещаний пятёрок, гарантированной самостоятельности и выдуманных кейсов.</li><li>Собственные демонстрации вместо чужих видео. Если используем фото или иллюстрацию, проверяем право на использование.</li><li>Истории о природе и других странах дополняют языковые рубрики; их охват сам по себе ещё не означает интерес к курсу.</li></ul>
     <p class="discover-footnote">Основание: открытые источники и исследование от ${DISCOVERY.reviewed}. После пилота пересмотреть распределение тем по фактическому отклику вашей аудитории.</p>
   </div>`;
+  document.querySelectorAll('[data-school-reel]').forEach(button=>button.addEventListener('click',()=>discoveryOpen(button.dataset.schoolReel)));
 }
