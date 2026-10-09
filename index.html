@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Лангуст v6 — Рабочая база</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap');
@@ -255,6 +255,7 @@ main{max-width:760px;margin:0 auto;padding:16px 14px 30px}
 .drawer::-webkit-scrollbar{width:3px}
 .drawer::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2)}
 </style>
+<link rel="stylesheet" href="assets/discovery.css">
 </head>
 <body>
 
@@ -286,6 +287,7 @@ main{max-width:760px;margin:0 auto;padding:16px 14px 30px}
   <div class="ni" onclick="go('fav',this)">⭐ Избранное / в работе</div>
   <div class="ni" onclick="go('home',this)">🗺️ Карта воронки</div>
   <div class="ni" onclick="go('matrix',this)">🧩 Матрица контента</div>
+  <div class="ni" onclick="go('x_discover',this)">✦ Познавательные рилсы</div>
   <div class="ni" onclick="go('howto',this)">🧭 Как пользоваться</div></div>
 
   <div class="ns"><div class="nl e1"><span class="dot"></span>Этап 1 · Корень зла</div>
@@ -340,6 +342,7 @@ main{max-width:760px;margin:0 auto;padding:16px 14px 30px}
 
 <div class="tabbar">
   <button class="active" id="tab-today" onclick="go('today',null);setTab('today')"><span class="ic">☀️</span>Сегодня</button>
+  <button id="tab-x_discover" onclick="go('x_discover',null)"><span class="ic">✦</span>Открытия</button>
   <button id="tab-search" onclick="go('search',null);setTab('search')"><span class="ic">🔍</span>Поиск</button>
   <button id="tab-fav" onclick="go('fav',null);setTab('fav')"><span class="ic">⭐</span>Избранное</button>
   <button id="tab-home" onclick="go('home',null);setTab('home')"><span class="ic">🗺️</span>Воронка</button>
@@ -348,6 +351,8 @@ main{max-width:760px;margin:0 auto;padding:16px 14px 30px}
 <div class="mo" id="modal"><div class="md"><h3 id="mtitle">Добавить</h3><div id="mbody"></div><div class="mdb"><button class="bs" onclick="closeM()">Отмена</button><button class="bp" onclick="saveM()">Сохранить</button></div></div></div>
 <div class="toast" id="toast"></div>
 
+<script src="assets/discovery-data.js"></script>
+<script src="assets/discovery.js"></script>
 <script>
 
 /* ===== ДАННЫЕ ===== */
@@ -798,8 +803,10 @@ function allItems(){
   e1_comments.forEach((c,i)=>push('e1_comments','comment','💬 Комментарий',i,c.t,c.c,c.tag));
   directs.forEach((d,i)=>push('e2_direct','direct','📩 Скрипт директа',i,d.t,d.body,''));
   headlines.forEach((h,i)=>push('x_heads','head','📰 Заголовок',i,h.h,h.h,h.tag));
-  return out;
+  return out.concat(discoveryItems());
 }
+
+function copyIndexedItem(id){const item=allItems().find(x=>x.id===id);if(item)discoveryCopy(item.text);}
 
 /* ---------- прогресс ---------- */
 function progressReels(){
@@ -807,6 +814,7 @@ function progressReels(){
   ['e1_reels','e2_reels','e2_proof','e2_conv','e3_reels'].forEach(s=>{
     reelsData[s].forEach((r,i)=>{total++;if(isDone(uid(s,i)))done++;});
   });
+  DISCOVERY.reels.forEach(r=>{total++;if(isDone(discoveryId(r.id)))done++;});
   return {done,total};
 }
 
@@ -835,6 +843,8 @@ function renderToday(){
   let html=`<div class="st">☀️ Сегодня</div><div class="ss">${dateStr} · твой план на день. Отметил снятое — оно уйдёт из ротации.</div>
   <div class="prog"><div class="pt2"><span class="plab">Отснято рилсов</span><span class="pval">${pr.done} из ${pr.total}</span></div>
   <div class="pbar"><div style="width:${pr.total?Math.round(pr.done/pr.total*100):0}%"></div></div></div>`;
+
+  html+=`<a class="discover-entry" href="#x_discover"><strong>✦ Познавательные рилсы</strong><span>12 сценариев с источниками · удивить, объяснить, обсудить с ребёнком →</span></a>`;
 
   /* слот 1: рилс дня (этап 1 — вход) */
   if(painReel){
@@ -897,11 +907,11 @@ function renderFav(){
   if(items.length){
     html+=`<button class="ba" style="border-style:solid;color:var(--navy);border-color:var(--navy);margin-bottom:12px" onclick="exportFav()">⬇️ Выгрузить список в текст</button>`;
     html+=items.map(x=>`<div class="item ${isDone(x.id)?'done':''}"><div class="ih" onclick="tItem(this)">
-    <div class="am"><div class="ak">${x.title}</div><div class="as">${x.label}${x.extra?' · '+x.extra:''}</div></div>
+    <div class="am"><div class="ak">${discoveryEscape(x.title)}</div><div class="as">${discoveryEscape(x.label)}${x.extra?' · '+discoveryEscape(x.extra):''}</div></div>
     <button class="hstar on" onclick="event.stopPropagation();toggleFav('${x.id}');renderFav()" style="background:none;border:none;font-size:18px;color:var(--acc)">★</button>
     <span class="arrow">▼</span></div>
-    <div class="ib"><div class="at">${x.text}</div>
-    <div class="acts"><button class="actbtn copy" onclick="cpTxt(${JSON.stringify(x.text)})">📋 Копировать</button>
+    <div class="ib"><div class="at">${discoveryEscape(x.text)}</div>
+    <div class="acts"><button class="actbtn copy" onclick="copyIndexedItem('${x.id}')">📋 Копировать</button>
     <button class="actbtn done ${isDone(x.id)?'on':''}" onclick="toggleDone('${x.id}');renderFav()">${isDone(x.id)?'✓ Использовано':'Отметить'}</button></div>
     </div></div>`).join('');
   } else {
@@ -917,7 +927,7 @@ function exportFav(){
 
 /* ==================== ПОИСК ==================== */
 function renderSearch(){
-  document.getElementById('sec-search').innerHTML=`<div class="st">🔍 Поиск по всему</div><div class="ss">Ищет по рилсам, постам, хукам, комментариям, скриптам и заголовкам.</div>
+  document.getElementById('sec-search').innerHTML=`<div class="st">🔍 Поиск по всему</div><div class="ss">Ищет по рилсам, постам, хукам, комментариям, скриптам, заголовкам и познавательным рилсам.</div>
   <div class="sw"><span class="si">🔍</span><input id="gsearch" placeholder="Например: репетитор, ГДЗ, диктант..." oninput="doSearch(this.value)"></div>
   <div id="searchres"><div class="empty"><div class="eic">🔍</div>Начни вводить — покажу совпадения.</div></div>`;
 }
@@ -926,13 +936,13 @@ function doSearch(q){
   const box=document.getElementById('searchres');
   if(q.length<2){box.innerHTML=`<div class="empty"><div class="eic">🔍</div>Введи хотя бы 2 буквы.</div>`;return;}
   const res=allItems().filter(x=>(x.title+' '+x.text+' '+(x.extra||'')).toLowerCase().includes(q)).slice(0,40);
-  if(!res.length){box.innerHTML=`<div class="empty"><div class="eic">🤷</div>Ничего не нашлось по «${q}».</div>`;return;}
+  if(!res.length){box.innerHTML=`<div class="empty"><div class="eic">🤷</div>Ничего не нашлось по «${discoveryEscape(q)}».</div>`;return;}
   box.innerHTML=`<div class="ss">Найдено: ${res.length}</div>`+res.map(x=>`<div class="item ${isDone(x.id)?'done':''}"><div class="ih" onclick="tItem(this)">
-  <div class="am"><div class="ak">${x.title}</div><div class="as">${x.label}${x.extra?' · '+x.extra:''}</div></div>
+  <div class="am"><div class="ak">${discoveryEscape(x.title)}</div><div class="as">${discoveryEscape(x.label)}${x.extra?' · '+discoveryEscape(x.extra):''}</div></div>
   <button class="hstar ${isFav(x.id)?'on':''}" onclick="event.stopPropagation();toggleFav('${x.id}');doSearch(document.getElementById('gsearch').value)">${isFav(x.id)?'★':'☆'}</button>
   <span class="arrow">▼</span></div>
-  <div class="ib"><div class="at">${x.text}</div>
-  <div class="acts"><button class="actbtn copy" onclick="cpTxt(${JSON.stringify(x.text)})">📋 Копировать</button></div></div></div>`).join('');
+  <div class="ib"><div class="at">${discoveryEscape(x.text)}</div>
+  <div class="acts"><button class="actbtn copy" onclick="copyIndexedItem('${x.id}')">📋 Копировать</button></div></div></div>`).join('');
 }
 
 /* ==================== ГЛАВНАЯ / КАРТА ==================== */
@@ -1418,7 +1428,7 @@ function renderRLegal(){document.getElementById('sec-r_legal').innerHTML=`<div c
 
 /* ==================== НАВИГАЦИЯ ==================== */
 const rendered={};
-const renderMap={today:renderToday,fav:renderFav,search:renderSearch,home:renderHome,matrix:renderMatrix,howto:renderHowto,
+const renderMap={today:renderToday,fav:renderFav,search:renderSearch,home:renderHome,matrix:renderMatrix,howto:renderHowto,x_discover:renderDiscovery,
   e1_idea:renderE1Idea,e1_reels:renderE1Reels,e1_posts:renderE1Posts,e1_comments:renderE1Comments,e1_hooks:renderE1Hooks,
   e2_idea:renderE2Idea,e2_reels:renderE2Reels,e2_proof:renderE2Proof,e2_conv:renderE2Conv,e2_direct:renderE2Direct,e2_funnel:renderE2Funnel,e2_postlead:renderE2PostLead,e2_price:renderE2Price,
   e3_idea:renderE3Idea,e3_reels:renderE3Reels,e3_posts:renderE3Posts,e3_forum:renderE3Forum,e3_nlp:renderE3Nlp,
@@ -1426,7 +1436,7 @@ const renderMap={today:renderToday,fav:renderFav,search:renderSearch,home:render
   x_persona:renderXPersona,x_tone:renderXTone,x_pos:renderXPos,x_aud:renderXAud,x_kw:renderXKw,x_heads:renderXHeads,x_plan:renderXPlan,x_agents:renderXAgents,
   r_method:renderRMethod,r_legal:renderRLegal,r_data:renderData};
 /* секции, которые надо перерисовывать каждый раз (динамика) */
-const alwaysRender={today:1,fav:1,search:1,home:1,matrix:1,r_data:1};
+const alwaysRender={x_discover:1,today:1,fav:1,search:1,home:1,matrix:1,r_data:1};
 
 function ensureSec(id){
   let sec=document.getElementById('sec-'+id);
@@ -1434,6 +1444,9 @@ function ensureSec(id){
   return sec;
 }
 function go(id,el){
+  if(!Object.prototype.hasOwnProperty.call(renderMap,id))id='today';
+  if(window.location.hash!=='#'+id)window.history.pushState(null,'','#'+id);
+  setTab(id);
   const sec=ensureSec(id);
   if(renderMap[id] && (!rendered[id]||alwaysRender[id])){renderMap[id]();rendered[id]=true;}
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
@@ -1647,7 +1660,9 @@ function copyCouncilPrompt(){
 
 /* ==================== СТАРТ ==================== */
 autoSeedMatrix();
-go('today',document.querySelector('.drawer .ni'));
+const initialSection=window.location.hash.slice(1);
+go(Object.prototype.hasOwnProperty.call(renderMap,initialSection)?initialSection:'today',null);
+window.addEventListener('hashchange',()=>go(window.location.hash.slice(1),null));
 
 
 </script>
